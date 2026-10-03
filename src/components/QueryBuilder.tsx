@@ -152,7 +152,6 @@ export default function QueryBuilder() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [queryPreview, setQueryPreview] = useState('');
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [sortState, setSortState] = useState<SortState>({ column: null, direction: null });
 
@@ -184,7 +183,7 @@ export default function QueryBuilder() {
     return OPERATORS.filter(op => op.types.includes(fieldType));
   };
 
-  const updateCondition = (groupId: string, conditionId: string, updates: Partial<Condition>) => {
+  const updateCondition = (_groupId: string, conditionId: string, updates: Partial<Condition>) => {
     const updateInGroup = (group: ConditionGroup): ConditionGroup => ({
       ...group,
       conditions: group.conditions.map(item => {
@@ -236,7 +235,7 @@ export default function QueryBuilder() {
     setRootGroup(addToGroup(rootGroup));
   };
 
-  const removeItem = (groupId: string, itemId: string) => {
+  const removeItem = (_groupId: string, itemId: string) => {
     const removeFromGroup = (group: ConditionGroup): ConditionGroup => ({
       ...group,
       conditions: group.conditions
@@ -591,7 +590,7 @@ export default function QueryBuilder() {
         <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
           <button
             onClick={() => addCondition(group.id)}
-            className="px-3 py-1 text-sm text-texas-blue hover:bg-blue-50 rounded-lg border border-texas-blue"
+            className="px-3 py-1 text-sm text-nc-blue hover:bg-blue-50 rounded-lg border border-nc-blue"
           >
             + Add Condition
           </button>
@@ -610,7 +609,7 @@ export default function QueryBuilder() {
     <DatabaseLoader>
     <div className="space-y-6">
       {/* Advanced Header */}
-      <div className="bg-gradient-to-r from-texas-blue to-blue-900 text-white rounded-xl p-6">
+      <div className="bg-gradient-to-r from-nc-blue to-blue-900 text-white rounded-xl p-6">
         <h1 className="text-2xl font-bold mb-2">Advanced</h1>
         <p className="text-blue-200">
           Build complex, multi-condition queries with boolean logic to analyze campaign finance data
@@ -637,7 +636,7 @@ export default function QueryBuilder() {
                   }}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     dataSource === source
-                      ? 'bg-texas-blue text-white'
+                      ? 'bg-nc-blue text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -661,7 +660,7 @@ export default function QueryBuilder() {
                 id="enableAggregation"
                 checked={aggregation.enabled}
                 onChange={(e) => setAggregation(prev => ({ ...prev, enabled: e.target.checked }))}
-                className="w-4 h-4 text-texas-blue"
+                className="w-4 h-4 text-nc-blue"
               />
               <label htmlFor="enableAggregation" className="font-semibold text-slate-900">
                 Enable Aggregation / Group By
@@ -767,14 +766,14 @@ export default function QueryBuilder() {
             <button
               onClick={executeQuery}
               disabled={loading}
-              className="flex-1 py-3 bg-texas-blue text-white font-semibold rounded-xl hover:bg-blue-900 disabled:opacity-50 transition-colors"
+              className="flex-1 py-3 bg-nc-blue text-white font-semibold rounded-xl hover:bg-blue-900 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Executing...' : 'Execute Query'}
             </button>
             {results.length > 0 && (
               <button
                 onClick={exportCSV}
-                className="px-6 py-3 border border-texas-blue text-texas-blue font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+                className="px-6 py-3 border border-nc-blue text-nc-blue font-semibold rounded-xl hover:bg-blue-50 transition-colors"
               >
                 Export CSV
               </button>

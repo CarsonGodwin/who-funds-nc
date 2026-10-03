@@ -13,8 +13,8 @@ import {
   searchContributions,
   formatCurrency,
   formatDateInt,
-} from '../lib/search';
-import type { Filer, Contribution, LatestReport, ReportTimelinePoint } from '../lib/search';
+} from '../lib/duckdb';
+import type { Filer, Contribution, LatestReport, ReportTimelinePoint } from '../lib/duckdb';
 
 interface CandidateProfileProps {
   filerId: string;
@@ -264,12 +264,12 @@ export default function CandidateProfile({ filerId }: CandidateProfileProps) {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Spent (this period)</p>
-                  <p className="text-xl font-bold text-texas-red">{formatCurrency(latestReport.totalExpenditures)}</p>
+                  <p className="text-xl font-bold text-nc-red">{formatCurrency(latestReport.totalExpenditures)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Cash on Hand</p>
                   {latestReport.cashOnHand != null ? (
-                    <p className={`text-xl font-bold ${latestReport.cashOnHand >= 0 ? 'text-texas-blue' : 'text-red-600'}`}>
+                    <p className={`text-xl font-bold ${latestReport.cashOnHand >= 0 ? 'text-nc-blue' : 'text-red-600'}`}>
                       {formatCurrency(latestReport.cashOnHand)}
                     </p>
                   ) : (
@@ -297,7 +297,7 @@ export default function CandidateProfile({ filerId }: CandidateProfileProps) {
                     onClick={() => setDatePreset(preset)}
                     className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                       datePreset === preset
-                        ? 'bg-texas-blue text-white'
+                        ? 'bg-nc-blue text-white'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
@@ -327,7 +327,7 @@ export default function CandidateProfile({ filerId }: CandidateProfileProps) {
               <button
                 onClick={applyFilters}
                 disabled={filterLoading}
-                className="px-4 py-1.5 text-sm font-medium bg-texas-blue text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 transition-colors"
+                className="px-4 py-1.5 text-sm font-medium bg-nc-blue text-white rounded-lg hover:bg-blue-900 disabled:opacity-50 transition-colors"
               >
                 {filterLoading ? 'Loading...' : 'Apply Filters'}
               </button>
@@ -347,7 +347,7 @@ export default function CandidateProfile({ filerId }: CandidateProfileProps) {
               </div>
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Expenditures</p>
-                <p className="text-xl font-bold text-texas-red">{formatCurrency(totalExpended)}</p>
+                <p className="text-xl font-bold text-nc-red">{formatCurrency(totalExpended)}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500 mb-1"># of Contributions</p>

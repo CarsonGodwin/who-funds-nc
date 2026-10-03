@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -15,7 +15,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialValue);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     if (onSearch) {
       onSearch(query);
@@ -41,7 +41,7 @@ export default function SearchBar({
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-texas-blue text-white rounded-lg hover:bg-blue-900 transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-nc-blue text-white rounded-lg hover:bg-blue-900 transition-colors"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

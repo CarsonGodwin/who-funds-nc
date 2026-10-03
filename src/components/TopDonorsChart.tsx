@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { formatCurrency } from '../lib/search';
+import { formatCurrency } from '../lib/duckdb';
 
 interface TopDonor {
   name: string;

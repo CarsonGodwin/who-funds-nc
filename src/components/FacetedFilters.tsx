@@ -107,14 +107,14 @@ export default function FacetedFilters({
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="text-sm text-texas-red hover:text-red-700"
+              className="text-sm text-nc-red hover:text-red-700"
             >
               Clear all
             </button>
           )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sm text-texas-blue hover:text-blue-700 md:hidden"
+            className="text-sm text-nc-blue hover:text-blue-700 md:hidden"
           >
             {isExpanded ? 'Show less' : 'Show more'}
           </button>
@@ -131,7 +131,7 @@ export default function FacetedFilters({
             type="date"
             value={filters.dateFrom}
             onChange={(e) => handleChange('dateFrom', e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
           />
         </div>
 
@@ -143,7 +143,7 @@ export default function FacetedFilters({
             type="date"
             value={filters.dateTo}
             onChange={(e) => handleChange('dateTo', e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
           />
         </div>
 
@@ -157,7 +157,7 @@ export default function FacetedFilters({
             value={filters.amountMin}
             onChange={(e) => handleChange('amountMin', e.target.value)}
             placeholder="$0"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
           />
         </div>
 
@@ -170,7 +170,7 @@ export default function FacetedFilters({
             value={filters.amountMax}
             onChange={(e) => handleChange('amountMax', e.target.value)}
             placeholder="No limit"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
           />
         </div>
 
@@ -183,7 +183,7 @@ export default function FacetedFilters({
             <select
               value={filters.contributorType}
               onChange={(e) => handleChange('contributorType', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent bg-white"
             >
               {CONTRIBUTOR_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -204,7 +204,7 @@ export default function FacetedFilters({
               <select
                 value={filters.party}
                 onChange={(e) => handleChange('party', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent bg-white"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent bg-white"
               >
                 {PARTIES.map((party) => (
                   <option key={party.value} value={party.value}>
@@ -221,7 +221,7 @@ export default function FacetedFilters({
               <select
                 value={filters.officeType}
                 onChange={(e) => handleChange('officeType', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent bg-white"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent bg-white"
               >
                 {OFFICE_TYPES.map((office) => (
                   <option key={office.value} value={office.value}>
@@ -238,7 +238,7 @@ export default function FacetedFilters({
               <select
                 value={filters.filerType}
                 onChange={(e) => handleChange('filerType', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent bg-white"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent bg-white"
               >
                 {FILER_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>

@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { formatCurrency } from '../lib/search';
-import type { ReportTimelinePoint } from '../lib/search';
+import { formatCurrency } from '../lib/duckdb';
+import type { ReportTimelinePoint } from '../lib/duckdb';
 
 interface ReportTimelineProps {
   data: ReportTimelinePoint[];

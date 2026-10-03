@@ -23,7 +23,7 @@ export async function loadNcGeo(): Promise<NcGeoData> {
   if (geoData) return geoData;
   if (loadPromise) return loadPromise;
 
-  loadPromise = fetch('/nc_geo.json')
+  loadPromise = fetch(`${import.meta.env.BASE_URL}nc_geo.json`)
     .then((res) => {
       if (!res.ok) throw new Error('Failed to load nc_geo.json');
       return res.json();

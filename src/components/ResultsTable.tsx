@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { formatCurrency, formatDate } from '../lib/search';
-import type { Contribution, Filer, Expenditure, SortParams } from '../lib/search';
+import { formatCurrency, formatDate } from '../lib/duckdb';
+import type { Contribution, Filer, Expenditure, SortParams } from '../lib/duckdb';
 
 // ============================================
 // EXPORTED SORTING UTILITIES
@@ -24,11 +24,11 @@ export function SortIndicator({ direction }: { direction: SortDirection }) {
     );
   }
   return direction === 'asc' ? (
-    <svg className="w-4 h-4 text-texas-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-4 h-4 text-nc-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
     </svg>
   ) : (
-    <svg className="w-4 h-4 text-texas-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-4 h-4 text-nc-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   );
@@ -221,7 +221,7 @@ export default function ResultsTable(props: ResultsTableProps) {
                   <td className="px-4 py-3">
                     <a
                       href={`/search/contributors?q=${encodeURIComponent(contribution.contributor_name || '')}${contribution.contributor_city ? `&city=${encodeURIComponent(contribution.contributor_city)}` : ''}`}
-                      className="font-medium text-texas-blue hover:text-blue-700 text-sm block"
+                      className="font-medium text-nc-blue hover:text-blue-700 text-sm block"
                     >
                       {contribution.contributor_name || 'Unknown'}
                     </a>
@@ -234,7 +234,7 @@ export default function ResultsTable(props: ResultsTableProps) {
                   <td className="px-4 py-3">
                     <a
                       href={`/candidate?id=${contribution.filer_id}`}
-                      className="text-sm text-texas-blue hover:text-blue-700"
+                      className="text-sm text-nc-blue hover:text-blue-700"
                     >
                       {contribution.filer_name || contribution.filer_id}
                     </a>
@@ -292,7 +292,7 @@ export default function ResultsTable(props: ResultsTableProps) {
                   <td className="px-4 py-3">
                     <a
                       href={`/candidate?id=${filer.id}`}
-                      className="font-medium text-texas-blue hover:text-blue-700 text-sm"
+                      className="font-medium text-nc-blue hover:text-blue-700 text-sm"
                     >
                       {filer.name}
                     </a>
@@ -359,7 +359,7 @@ export default function ResultsTable(props: ResultsTableProps) {
                 <td className="px-4 py-3">
                   <a
                     href={`/candidate?id=${expenditure.filer_id}`}
-                    className="text-sm text-texas-blue hover:text-blue-700"
+                    className="text-sm text-nc-blue hover:text-blue-700"
                   >
                     {expenditure.filer_name || expenditure.filer_id}
                   </a>
@@ -375,7 +375,7 @@ export default function ResultsTable(props: ResultsTableProps) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="font-medium text-texas-red text-sm">
+                  <span className="font-medium text-nc-red text-sm">
                     {formatCurrency(expenditure.amount)}
                   </span>
                 </td>

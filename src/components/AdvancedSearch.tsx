@@ -736,7 +736,7 @@ export default function AdvancedSearch() {
       {/* Filters Panel */}
       <div className="space-y-4">
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-texas-blue text-white">
+          <div className="p-4 border-b border-slate-200 bg-nc-blue text-white">
             <h2 className="text-lg font-semibold">List Builder</h2>
             <p className="text-sm text-blue-200 mt-1">Build targeted lists with multiple filters</p>
           </div>
@@ -753,7 +753,7 @@ export default function AdvancedSearch() {
                         type="radio"
                         checked={filters.transactionType === 'contributions'}
                         onChange={() => updateFilter('transactionType', 'contributions')}
-                        className="w-4 h-4 text-texas-blue"
+                        className="w-4 h-4 text-nc-blue"
                       />
                       <span className="text-sm">Contributions</span>
                     </label>
@@ -762,7 +762,7 @@ export default function AdvancedSearch() {
                         type="radio"
                         checked={filters.transactionType === 'expenditures'}
                         onChange={() => updateFilter('transactionType', 'expenditures')}
-                        className="w-4 h-4 text-texas-blue"
+                        className="w-4 h-4 text-nc-blue"
                       />
                       <span className="text-sm">Expenditures</span>
                     </label>
@@ -785,7 +785,7 @@ export default function AdvancedSearch() {
                       value={filters.name}
                       onChange={(e) => updateFilter('name', e.target.value)}
                       placeholder="Enter name..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                     />
                   </div>
                   <div>
@@ -793,7 +793,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.nameSearchType}
                       onChange={(e) => updateFilter('nameSearchType', e.target.value as 'contains' | 'exact' | 'starts_with')}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       <option value="contains">Contains</option>
                       <option value="exact">Exact Match</option>
@@ -819,7 +819,7 @@ export default function AdvancedSearch() {
                         value={filters.amountMin}
                         onChange={(e) => updateFilter('amountMin', e.target.value)}
                         placeholder="$0"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                     <div>
@@ -831,7 +831,7 @@ export default function AdvancedSearch() {
                         value={filters.amountMax}
                         onChange={(e) => updateFilter('amountMax', e.target.value)}
                         placeholder="No limit"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                   </div>
@@ -881,7 +881,7 @@ export default function AdvancedSearch() {
                         type="date"
                         value={filters.dateFrom}
                         onChange={(e) => updateFilter('dateFrom', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                     <div>
@@ -890,7 +890,7 @@ export default function AdvancedSearch() {
                         type="date"
                         value={filters.dateTo}
                         onChange={(e) => updateFilter('dateTo', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                   </div>
@@ -963,7 +963,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.county}
                       onChange={(e) => updateFilter('county', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       <option value="">All Counties</option>
                       {ncGeo?.counties.map((c) => (
@@ -980,7 +980,7 @@ export default function AdvancedSearch() {
                       value={filters.city}
                       onChange={(e) => updateFilter('city', e.target.value)}
                       placeholder="e.g., Raleigh, Charlotte"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                     />
                   </div>
 
@@ -992,7 +992,7 @@ export default function AdvancedSearch() {
                       value={filters.zipCode}
                       onChange={(e) => updateFilter('zipCode', e.target.value)}
                       placeholder="e.g., 27601, 28202"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                     />
                     <p className="text-xs text-slate-400 mt-1">Partial match supported (e.g., "276" for Raleigh area)</p>
                   </div>
@@ -1003,7 +1003,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.state}
                       onChange={(e) => updateFilter('state', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       {STATES.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
@@ -1027,7 +1027,7 @@ export default function AdvancedSearch() {
                       <select
                         value={filters.contributorType}
                         onChange={(e) => updateFilter('contributorType', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                       >
                         {CONTRIBUTOR_TYPES.map((t) => (
                           <option key={t.value} value={t.value}>{t.label}</option>
@@ -1041,7 +1041,7 @@ export default function AdvancedSearch() {
                         value={filters.employer}
                         onChange={(e) => updateFilter('employer', e.target.value)}
                         placeholder="e.g., ExxonMobil, AT&T"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                     <div>
@@ -1051,7 +1051,7 @@ export default function AdvancedSearch() {
                         value={filters.occupation}
                         onChange={(e) => updateFilter('occupation', e.target.value)}
                         placeholder="e.g., Attorney, CEO"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                       />
                     </div>
                   </div>
@@ -1071,7 +1071,7 @@ export default function AdvancedSearch() {
                       value={filters.filerName}
                       onChange={(e) => updateFilter('filerName', e.target.value)}
                       placeholder="Candidate or committee name"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                     />
                   </div>
                   <div>
@@ -1079,7 +1079,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.filerType}
                       onChange={(e) => updateFilter('filerType', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       {FILER_TYPES.map((t) => (
                         <option key={t.value} value={t.value}>{t.label}</option>
@@ -1091,7 +1091,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.officeType}
                       onChange={(e) => updateFilter('officeType', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       {OFFICE_TYPES.map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -1103,7 +1103,7 @@ export default function AdvancedSearch() {
                     <select
                       value={filters.party}
                       onChange={(e) => updateFilter('party', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                     >
                       {PARTIES.map((p) => (
                         <option key={p.value} value={p.value}>{p.label}</option>
@@ -1125,7 +1125,7 @@ export default function AdvancedSearch() {
                       <select
                         value={filters.expenditureCategory}
                         onChange={(e) => updateFilter('expenditureCategory', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue bg-white"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue bg-white"
                       >
                         {EXPENDITURE_CATEGORIES.map((c) => (
                           <option key={c.value} value={c.value}>{c.label}</option>
@@ -1149,7 +1149,7 @@ export default function AdvancedSearch() {
                           type="checkbox"
                           checked={filters.groupByDonor}
                           onChange={(e) => updateFilter('groupByDonor', e.target.checked)}
-                          className="w-4 h-4 text-texas-blue rounded"
+                          className="w-4 h-4 text-nc-blue rounded"
                         />
                         <span className="text-sm font-medium text-slate-700">Group by Donor</span>
                       </label>
@@ -1170,7 +1170,7 @@ export default function AdvancedSearch() {
                             onChange={(e) => updateFilter('minContributions', e.target.value)}
                             placeholder="e.g., 5"
                             min="0"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                           />
                         </div>
                         <div>
@@ -1183,7 +1183,7 @@ export default function AdvancedSearch() {
                             value={filters.minTotalAmount}
                             onChange={(e) => updateFilter('minTotalAmount', e.target.value)}
                             placeholder="e.g., 10000"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-texas-blue"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-nc-blue"
                           />
                         </div>
                         <div className="flex gap-2 flex-wrap">
@@ -1222,7 +1222,7 @@ export default function AdvancedSearch() {
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="w-full py-3 bg-texas-blue text-white font-semibold rounded-lg hover:bg-blue-900 disabled:opacity-50 transition-colors"
+              className="w-full py-3 bg-nc-blue text-white font-semibold rounded-lg hover:bg-blue-900 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Searching...' : 'Search'}
             </button>
@@ -1250,7 +1250,7 @@ export default function AdvancedSearch() {
           {hasSearched && totalCount > 0 && (
             <button
               onClick={handleExportCSV}
-              className="px-4 py-2 text-sm font-medium text-texas-blue border border-texas-blue rounded-lg hover:bg-blue-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-nc-blue border border-nc-blue rounded-lg hover:bg-blue-50 transition-colors"
             >
               Export CSV
             </button>
@@ -1298,13 +1298,13 @@ export default function AdvancedSearch() {
                           <td className="px-4 py-3">
                             <a
                               href={`/search/contributors?q=${encodeURIComponent(donor.contributor_name || '')}`}
-                              className="font-medium text-texas-blue hover:text-blue-700 text-sm block"
+                              className="font-medium text-nc-blue hover:text-blue-700 text-sm block"
                             >
                               {donor.contributor_name || 'Unknown'}
                             </a>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="font-medium text-texas-blue text-sm">
+                            <span className="font-medium text-nc-blue text-sm">
                               {donor.num_contributions.toLocaleString()}
                             </span>
                           </td>
@@ -1350,7 +1350,7 @@ export default function AdvancedSearch() {
         {!hasSearched && (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-texas-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-8 h-8 text-nc-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

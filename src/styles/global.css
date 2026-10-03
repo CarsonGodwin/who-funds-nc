@@ -1,10 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-texas-red: #BF0D3E;
-  --color-texas-blue: #002868;
-  --color-texas-gold: #D4A84B;
-  --color-texas-cream: #F5F1E8;
+  --color-nc-red: #BF0D3E;
+  --color-nc-blue: #002868;
 }
 
 html {
@@ -16,20 +14,20 @@ body {
 }
 
 .btn-primary {
-  @apply px-4 py-2 bg-texas-blue text-white font-medium rounded-lg
+  @apply px-4 py-2 bg-nc-blue text-white font-medium rounded-lg
          hover:bg-blue-900 transition-colors duration-200
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:ring-offset-2;
+         focus:outline-none focus:ring-2 focus:ring-nc-blue focus:ring-offset-2;
 }
 
 .btn-secondary {
-  @apply px-4 py-2 bg-white text-texas-blue border border-texas-blue
+  @apply px-4 py-2 bg-white text-nc-blue border border-nc-blue
          font-medium rounded-lg hover:bg-slate-50 transition-colors duration-200
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:ring-offset-2;
+         focus:outline-none focus:ring-2 focus:ring-nc-blue focus:ring-offset-2;
 }
 
 .input-field {
   @apply w-full px-4 py-3 border border-slate-300 rounded-lg
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent
+         focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent
          placeholder:text-slate-400;
 }
 

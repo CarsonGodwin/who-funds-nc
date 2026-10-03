@@ -3,7 +3,7 @@ import FacetedFilters, { type FilterValues } from './FacetedFilters';
 import ResultsTable from './ResultsTable';
 import Pagination from './Pagination';
 import DatabaseLoader from './DatabaseLoader';
-import { searchContributions, type SearchFilters, type Contribution, type SortParams } from '../lib/search';
+import { searchContributions, type SearchFilters, type Contribution, type SortParams } from '../lib/duckdb';
 
 interface ContributorSearchProps {
   initialQuery?: string;
@@ -95,7 +95,7 @@ export default function ContributorSearch({ initialQuery = '' }: ContributorSear
     alert('CSV export coming soon!');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     setCurrentPage(1);
     performSearch();
@@ -112,7 +112,7 @@ export default function ContributorSearch({ initialQuery = '' }: ContributorSear
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by contributor name..."
-            className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent"
+            className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
           />
           <svg
             className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -125,7 +125,7 @@ export default function ContributorSearch({ initialQuery = '' }: ContributorSear
         </div>
         <button
           type="submit"
-          className="px-6 py-3 bg-texas-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors"
+          className="px-6 py-3 bg-nc-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors"
         >
           Search
         </button>
@@ -145,7 +145,7 @@ export default function ContributorSearch({ initialQuery = '' }: ContributorSear
         </h2>
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 text-sm font-medium text-texas-blue border border-texas-blue rounded-lg hover:bg-blue-50 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-nc-blue border border-nc-blue rounded-lg hover:bg-blue-50 transition-colors"
         >
           Export CSV
         </button>
