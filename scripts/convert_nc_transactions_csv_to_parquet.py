@@ -367,10 +367,10 @@ def main() -> None:
         for col in numeric_cols:
             frame[col] = pd.to_numeric(frame[col], errors="coerce").fillna(0)
 
-    filers.to_parquet(output_dir / "filers.parquet", index=False)
-    contributions.to_parquet(output_dir / "contributions_2020.parquet", index=False)
-    expenditures.to_parquet(output_dir / "expenditures.parquet", index=False)
-    reports.to_parquet(output_dir / "reports.parquet", index=False)
+    filers.to_parquet(output_dir / "filers.parquet", index=False, compression="zstd")
+    contributions.to_parquet(output_dir / "contributions_2020.parquet", index=False, compression="zstd")
+    expenditures.to_parquet(output_dir / "expenditures.parquet", index=False, compression="zstd")
+    reports.to_parquet(output_dir / "reports.parquet", index=False, compression="zstd")
 
     print("Generated Parquet files:")
     print(f"  {output_dir / 'filers.parquet'} ({len(filers)} rows)")

@@ -131,10 +131,17 @@ export async function downloadWithProgress(
   url: string,
   onProgress?: (loaded: number, total: number) => void
 ): Promise<ArrayBuffer> {
-  const response = await fetch(url);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    throw new Error(
+      `Network error fetching ${url}. Check that the parquet files were deployed, or, if PUBLIC_DATA_URL is set, that it is reachable and allows CORS from this site.`
+    );
+  }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    throw new Error(`Failed to fetch ${url}: HTTP ${response.status}`);
   }
 
   const contentLength = response.headers.get('content-length');

@@ -4,8 +4,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "build:pages": "astro check && astro build && node scripts/prune-dist-parquet.mjs",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "npm run build && npx wrangler deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

@@ -9,9 +9,11 @@ import {
   clearCache as clearParquetCache,
 } from './parquet-cache';
 
-// R2 bucket URL (custom domain with CDN caching)
-// Set PUBLIC_DATA_URL in your .env to point to your own CDN/bucket
-const R2_BASE = import.meta.env.PUBLIC_DATA_URL || 'https://your-data-bucket.example.com';
+// Parquet files are served from the site itself (public/parquet) by default.
+// Set PUBLIC_DATA_URL to load them from an external CDN/bucket instead.
+const configuredDataUrl = (import.meta.env.PUBLIC_DATA_URL || '').trim();
+const defaultBundledDataUrl = `${import.meta.env.BASE_URL}parquet`;
+const R2_BASE = (configuredDataUrl || defaultBundledDataUrl).replace(/\/$/, '');
 
 // Parquet files to load
 const PARQUET_FILES = [
@@ -267,18 +269,24 @@ async function loadParquetFile(
     cached: false,
   });
 
-  const data = await downloadWithProgress(url, (loaded, total) => {
-    const fileProgress = Math.round((loaded / total) * 100);
-    const baseProgress = (fileIndex / totalFiles) * 100;
-    const fileContribution = (1 / totalFiles) * 100 * (loaded / total);
+  let data: ArrayBuffer;
+  try {
+    data = await downloadWithProgress(url, (loaded, total) => {
+      const fileProgress = Math.round((loaded / total) * 100);
+      const baseProgress = (fileIndex / totalFiles) * 100;
+      const fileContribution = (1 / totalFiles) * 100 * (loaded / total);
 
-    setProgress({
-      fileProgress,
-      totalProgress: Math.round(baseProgress + fileContribution),
-      downloadedBytes: loaded,
-      totalBytes: total,
+      setProgress({
+        fileProgress,
+        totalProgress: Math.round(baseProgress + fileContribution),
+        downloadedBytes: loaded,
+        totalBytes: total,
+      });
     });
-  });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to load ${fileName} from ${url}. ${message}`);
+  }
 
   // Cache for next time
   await setCachedFile(url, data);
