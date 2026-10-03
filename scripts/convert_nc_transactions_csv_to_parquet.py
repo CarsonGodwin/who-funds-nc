@@ -18,6 +18,7 @@ Date Occured, Account Code, Amount, Form of Payment, Purpose
 from __future__ import annotations
 
 import argparse
+import json
 import hashlib
 import re
 from datetime import datetime
@@ -377,6 +378,15 @@ def main() -> None:
     print(f"  {output_dir / 'contributions_2020.parquet'} ({len(contributions)} rows)")
     print(f"  {output_dir / 'expenditures.parquet'} ({len(expenditures)} rows)")
     print(f"  {output_dir / 'reports.parquet'} ({len(reports)} rows)")
+
+    # Row counts shown on the home page; served next to the parquet files.
+    stats = {
+        "contributions": len(contributions),
+        "expenditures": len(expenditures),
+        "filers": len(filers),
+        "reports": len(reports),
+    }
+    (output_dir / "stats.json").write_text(json.dumps(stats))
 
 
 if __name__ == "__main__":

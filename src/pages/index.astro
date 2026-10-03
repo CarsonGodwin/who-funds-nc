@@ -89,19 +89,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <!-- Stats Row -->
         <div class="stats-row">
           <div class="stat">
-            <span class="stat-value">placeholder</span>
+            <span class="stat-value" data-stat="contributions">—</span>
             <span class="stat-label">Contributions</span>
           </div>
           <div class="stat">
-            <span class="stat-value">placeholder</span>
+            <span class="stat-value" data-stat="expenditures">—</span>
             <span class="stat-label">Expenditures</span>
           </div>
           <div class="stat">
-            <span class="stat-value">placeholder</span>
+            <span class="stat-value" data-stat="filers">—</span>
             <span class="stat-label">Filers</span>
           </div>
           <div class="stat">
-            <span class="stat-value">placeholder</span>
+            <span class="stat-value" data-stat="reports">—</span>
             <span class="stat-label">Reports</span>
           </div>
         </div>
@@ -220,6 +220,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <script>
+  import { dataUrl } from "../lib/data-url";
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     // Ignore if typing in an input
@@ -250,6 +252,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         break;
     }
   });
+
+  // Row counts (written next to the parquet files by the conversion script)
+  fetch(dataUrl('stats.json'))
+    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+    .then((stats: Record<string, number>) => {
+      document.querySelectorAll<HTMLElement>('[data-stat]').forEach((el) => {
+        const value = stats[el.dataset.stat!];
+        if (typeof value === 'number') el.textContent = value.toLocaleString();
+      });
+    })
+    .catch((err) => console.warn('Could not load stats.json:', err));
 
   // Quick search functionality
   const searchInput = document.getElementById('quickSearch') as HTMLInputElement;

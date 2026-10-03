@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { formatCurrency, formatDate } from '../lib/duckdb';
-import type { Contribution, Filer, Expenditure, SortParams } from '../lib/duckdb';
+import { formatCurrency, formatDate } from '../lib/format';
+import type { Contribution, Filer, Expenditure, SortParams } from '../lib/types';
 
 // ============================================
 // EXPORTED SORTING UTILITIES

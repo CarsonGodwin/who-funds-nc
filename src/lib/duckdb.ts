@@ -8,14 +8,9 @@ import {
   clearCache,
   getCacheInfo,
 } from './parquet-cache';
+import { dataUrl } from './data-url';
 
 export { clearCache, getCacheInfo };
-
-// Parquet files are served from the site itself (public/parquet) by default.
-// Set PUBLIC_DATA_URL to load them from an external CDN/bucket instead.
-const configuredDataUrl = (import.meta.env.PUBLIC_DATA_URL || '').trim();
-const defaultBundledDataUrl = `${import.meta.env.BASE_URL}parquet`;
-const DATA_BASE_URL = (configuredDataUrl || defaultBundledDataUrl).replace(/\/$/, '');
 
 /**
  * Each parquet file is exposed to the UI as a view with the same name.
@@ -93,7 +88,7 @@ let initPromise: Promise<void> | null = null;
 
 /** Return a parquet file's bytes, from the IndexedDB cache when it is still current. */
 async function loadParquetFile(fileName: string, fileIndex: number, totalFiles: number): Promise<ArrayBuffer> {
-  const url = `${DATA_BASE_URL}/${fileName}`;
+  const url = dataUrl(fileName);
 
   const cached = await getCachedFile(url);
   if (cached && isCacheFresh(cached, await fetchRemoteVersion(url))) {

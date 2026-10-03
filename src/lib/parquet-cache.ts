@@ -1,23 +1,47 @@
 /**
- * IndexedDB cache for parquet files
- * Stores downloaded parquet files locally to avoid repeated R2 requests
+ * IndexedDB cache for parquet files.
+ * Stores downloaded files locally and revalidates them against the server's
+ * Last-Modified / Content-Length so refreshed data is picked up.
  */
 
-const DB_NAME = 'tec-parquet-cache';
+const DB_NAME = 'armadollar-nc-parquet-cache';
+const LEGACY_DB_NAMES = ['tec-parquet-cache'];
 const DB_VERSION = 1;
 const STORE_NAME = 'parquet-files';
+
+/**
+ * Identifies a published version of a remote file. ETag is only readable same-origin (or when the
+ * bucket exposes it); Last-Modified is CORS-safelisted. Content-Length is deliberately not used:
+ * it can differ between HEAD and GET when the CDN compresses.
+ */
+export interface RemoteVersion {
+  etag: string | null;
+  lastModified: string | null;
+}
+
+const normalizeEtag = (etag: string | null) => etag?.replace(/^W\//, '') ?? null;
+
+function readVersion(response: Response): RemoteVersion {
+  return {
+    etag: normalizeEtag(response.headers.get('etag')),
+    lastModified: response.headers.get('last-modified'),
+  };
+}
 
 interface CachedFile {
   url: string;
   data: ArrayBuffer;
   timestamp: number;
   size: number;
+  version?: RemoteVersion;
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
+
+  LEGACY_DB_NAMES.forEach((name) => indexedDB.deleteDatabase(name));
 
   dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -36,19 +60,14 @@ function openDB(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-export async function getCachedFile(url: string): Promise<ArrayBuffer | null> {
+export async function getCachedFile(url: string): Promise<CachedFile | null> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(url);
+      const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(url);
 
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        const result = request.result as CachedFile | undefined;
-        resolve(result?.data || null);
-      };
+      request.onsuccess = () => resolve((request.result as CachedFile | undefined) ?? null);
     });
   } catch (error) {
     console.warn('Failed to get cached file:', error);
@@ -56,7 +75,31 @@ export async function getCachedFile(url: string): Promise<ArrayBuffer | null> {
   }
 }
 
-export async function setCachedFile(url: string, data: ArrayBuffer): Promise<void> {
+/**
+ * Ask the server which version of a file it currently has.
+ * Returns null if the server can't be reached (e.g. offline) so callers can fall back to the cache.
+ */
+export async function fetchRemoteVersion(url: string): Promise<RemoteVersion | null> {
+  try {
+    const response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+    if (!response.ok) return null;
+    return readVersion(response);
+  } catch {
+    return null;
+  }
+}
+
+/** True when the cached copy still matches what the server has (or we can't tell). */
+export function isCacheFresh(cached: CachedFile, remote: RemoteVersion | null): boolean {
+  if (!remote || !cached.version) return true;
+  if (remote.etag && cached.version.etag) return remote.etag === cached.version.etag;
+  if (remote.lastModified && cached.version.lastModified) {
+    return remote.lastModified === cached.version.lastModified;
+  }
+  return true;
+}
+
+export async function setCachedFile(url: string, data: ArrayBuffer, version?: RemoteVersion | null): Promise<void> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -67,6 +110,7 @@ export async function setCachedFile(url: string, data: ArrayBuffer): Promise<voi
         data,
         timestamp: Date.now(),
         size: data.byteLength,
+        version: version ?? undefined,
       };
       const request = store.put(entry);
 
@@ -127,10 +171,15 @@ export async function isCacheAvailable(): Promise<boolean> {
 }
 
 // Download file with progress tracking
+export interface Download {
+  data: ArrayBuffer;
+  version: RemoteVersion;
+}
+
 export async function downloadWithProgress(
   url: string,
   onProgress?: (loaded: number, total: number) => void
-): Promise<ArrayBuffer> {
+): Promise<Download> {
   let response: Response;
   try {
     response = await fetch(url);
@@ -146,10 +195,11 @@ export async function downloadWithProgress(
 
   const contentLength = response.headers.get('content-length');
   const total = contentLength ? parseInt(contentLength, 10) : 0;
+  const version = readVersion(response);
 
   if (!response.body) {
     // Fallback for browsers without streaming support
-    return response.arrayBuffer();
+    return { data: await response.arrayBuffer(), version };
   }
 
   const reader = response.body.getReader();
@@ -158,18 +208,13 @@ export async function downloadWithProgress(
 
   while (true) {
     const { done, value } = await reader.read();
-
     if (done) break;
 
     chunks.push(value);
     loaded += value.length;
-
-    if (onProgress && total > 0) {
-      onProgress(loaded, total);
-    }
+    if (onProgress && total > 0) onProgress(loaded, total);
   }
 
-  // Combine chunks into single ArrayBuffer
   const combined = new Uint8Array(loaded);
   let offset = 0;
   for (const chunk of chunks) {
@@ -177,7 +222,7 @@ export async function downloadWithProgress(
     offset += chunk.length;
   }
 
-  return combined.buffer;
+  return { data: combined.buffer, version };
 }
 
 // Format bytes for display

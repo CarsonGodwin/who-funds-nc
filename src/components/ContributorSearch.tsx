@@ -3,7 +3,8 @@ import FacetedFilters, { type FilterValues } from './FacetedFilters';
 import ResultsTable from './ResultsTable';
 import Pagination from './Pagination';
 import DatabaseLoader from './DatabaseLoader';
-import { searchContributions, type SearchFilters, type Contribution, type SortParams } from '../lib/duckdb';
+import { type Contribution, type SortParams } from '../lib/types';
+import { searchContributions, type SearchFilters } from '../lib/queries';
 
 interface ContributorSearchProps {
   initialQuery?: string;

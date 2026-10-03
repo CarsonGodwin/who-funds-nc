@@ -3,8 +3,9 @@ import FacetedFilters, { type FilterValues } from './FacetedFilters';
 import ResultsTable from './ResultsTable';
 import Pagination from './Pagination';
 import DatabaseLoader from './DatabaseLoader';
-import { searchFilers, type SearchFilters, type SortParams } from '../lib/duckdb';
-import type { Filer } from '../lib/duckdb';
+import { type SortParams } from '../lib/types';
+import { searchFilers, type SearchFilters } from '../lib/queries';
+import type { Filer } from '../lib/types';
 
 interface CandidateSearchProps {
   initialQuery?: string;

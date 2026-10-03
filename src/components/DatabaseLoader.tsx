@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { onInitProgressChange, waitForInit, clearCache, getCacheInfo, type InitProgress } from '../lib/duckdb';
+import { onInitProgressChange, waitForInit, clearCache, getCacheInfo, APPROX_DOWNLOAD_BYTES, type InitProgress } from '../lib/duckdb';
 import { formatBytes } from '../lib/parquet-cache';
+
+const APPROX_DOWNLOAD = `~${Math.round(APPROX_DOWNLOAD_BYTES / 1e6)} MB`;
 
 interface DatabaseLoaderProps {
   children: React.ReactNode;
@@ -25,7 +27,7 @@ export default function DatabaseLoader({ children }: DatabaseLoaderProps) {
   }, []);
 
   const handleClearCache = async () => {
-    if (confirm('Clear cached data? You will need to re-download ~290MB on next visit.')) {
+    if (confirm(`Clear cached data? You will need to re-download ${APPROX_DOWNLOAD} on next visit.`)) {
       await clearCache();
       window.location.reload();
     }
@@ -97,7 +99,7 @@ export default function DatabaseLoader({ children }: DatabaseLoaderProps) {
     if (progress.status === 'checking-cache') {
       return 'Checking if data is already cached locally...';
     }
-    return 'First load downloads ~290MB, then it\'s cached locally';
+    return `First load downloads ${APPROX_DOWNLOAD}, then it's cached locally`;
   };
 
   return (

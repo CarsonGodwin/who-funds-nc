@@ -4,17 +4,10 @@ import ReportTimeline from './ReportTimeline';
 import ResultsTable from './ResultsTable';
 import Pagination from './Pagination';
 import DatabaseLoader from './DatabaseLoader';
-import {
-  getFilerById,
-  getLatestReport,
-  getTopDonorsFiltered,
-  getReportTimeline,
-  getFilerStatsFiltered,
-  searchContributions,
-  formatCurrency,
-  formatDateInt,
-} from '../lib/duckdb';
-import type { Filer, Contribution, LatestReport, ReportTimelinePoint } from '../lib/duckdb';
+import { formatCurrency, formatDateInt } from '../lib/format';
+import { getFilerById, getLatestReport, getTopDonorsFiltered, getReportTimeline, getFilerStatsFiltered, searchContributions } from '../lib/queries';
+import type { Filer, Contribution } from '../lib/types';
+import type { LatestReport, ReportTimelinePoint } from '../lib/queries';
 
 interface CandidateProfileProps {
   filerId: string;
