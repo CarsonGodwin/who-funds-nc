@@ -1,38 +1,137 @@
 @import "tailwindcss";
 
 @theme {
-  --color-texas-red: #BF0D3E;
-  --color-texas-blue: #002868;
-  --color-texas-gold: #D4A84B;
-  --color-texas-cream: #F5F1E8;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-nc-blue: #002868;
+  --color-nc-blue-dark: #001a45;
+  --color-nc-blue-light: #e8edf7;
+  --color-nc-red: #bf0d3e;
 }
 
-html {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-nc-blue;
+  }
+
+  /* Dollar amounts and counts line up in columns. */
+  td,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+/* Base styles that other component classes build on (@apply only accepts utilities). */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap
+         transition-colors disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-.btn-primary {
-  @apply px-4 py-2 bg-texas-blue text-white font-medium rounded-lg
-         hover:bg-blue-900 transition-colors duration-200
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:ring-offset-2;
+@utility input {
+  @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
+         placeholder:text-slate-400 focus:border-nc-blue focus:ring-2 focus:ring-nc-blue/20 focus:outline-none;
 }
 
-.btn-secondary {
-  @apply px-4 py-2 bg-white text-texas-blue border border-texas-blue
-         font-medium rounded-lg hover:bg-slate-50 transition-colors duration-200
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:ring-offset-2;
-}
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
 
-.input-field {
-  @apply w-full px-4 py-3 border border-slate-300 rounded-lg
-         focus:outline-none focus:ring-2 focus:ring-texas-blue focus:border-transparent
-         placeholder:text-slate-400;
-}
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-xs;
+  }
 
-.card {
-  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6;
+  .card-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4;
+  }
+
+  .card-title {
+    @apply text-base font-semibold text-slate-900;
+  }
+
+  /* ---- Buttons ---- */
+
+  .btn-primary {
+    @apply btn bg-nc-blue text-white hover:bg-nc-blue-dark;
+  }
+
+  .btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50;
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Pill-shaped toggle, e.g. year presets. */
+  .chip {
+    @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700
+           transition-colors hover:border-slate-300 hover:bg-slate-50;
+  }
+
+  .chip[aria-pressed="true"] {
+    @apply border-nc-blue bg-nc-blue text-white hover:bg-nc-blue-dark;
+  }
+
+  /* ---- Form controls ---- */
+
+  .field-label {
+    @apply mb-1 block text-sm font-medium text-slate-700;
+  }
+
+  .field-hint {
+    @apply mt-1 text-xs text-slate-500;
+  }
+
+  .input-lg {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base text-slate-900
+           placeholder:text-slate-400 focus:border-nc-blue focus:ring-2 focus:ring-nc-blue/20 focus:outline-none;
+  }
+
+  /* ---- Data display ---- */
+
+  .badge {
+    @apply inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700;
+  }
+
+  .stat-label {
+    @apply text-xs font-medium tracking-wide text-slate-500 uppercase;
+  }
+
+  .stat-value {
+    @apply mt-1 text-xl font-semibold tracking-tight text-slate-900 tabular-nums sm:text-2xl;
+  }
+
+  .link {
+    @apply font-medium text-nc-blue hover:text-nc-blue-dark hover:underline;
+  }
+
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+
+  .data-table th {
+    @apply border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold tracking-wide text-slate-600 uppercase;
+  }
+
+  .data-table td {
+    @apply border-b border-slate-100 px-4 py-3 align-top;
+  }
+
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-slate-50;
+  }
 }

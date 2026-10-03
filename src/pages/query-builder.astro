@@ -1,24 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import QueryBuilderComponent from '../components/QueryBuilder';
 ---
 
-<BaseLayout title="Expert Mode" description="Build complex queries with boolean logic for North Carolina campaign finance data">
-  <div class="bg-slate-100 min-h-screen">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Page Header -->
-      <div class="mb-6">
-        <nav class="text-sm text-slate-500 mb-2">
-          <a href="/" class="hover:text-texas-blue">Home</a>
-          <span class="mx-2">›</span>
-          <a href="/advanced" class="hover:text-texas-blue">List Builder</a>
-          <span class="mx-2">›</span>
-          <span class="text-slate-900">Expert Mode</span>
-        </nav>
-      </div>
-
-      <!-- Expert Mode Component -->
-      <QueryBuilderComponent client:load />
-    </div>
+<BaseLayout title="Expert Mode" description="Query North Carolina campaign finance data with boolean logic and aggregations">
+  <div class="page-container py-8">
+    <PageHeader
+      title="Expert Mode"
+      description="Combine conditions with AND/OR groups, aggregate with GROUP BY, and see the SQL that runs."
+    />
+    <QueryBuilderComponent client:load />
   </div>
 </BaseLayout>

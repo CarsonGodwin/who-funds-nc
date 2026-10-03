@@ -1,116 +1,89 @@
+import { formatCount } from '../lib/format';
+
 interface PaginationProps {
   currentPage: number;
-  totalPages: number;
   totalResults: number;
   pageSize: number;
   onPageChange: (page: number) => void;
 }
 
-export default function Pagination({
-  currentPage,
-  totalPages,
-  totalResults,
-  pageSize,
-  onPageChange,
-}: PaginationProps) {
-  const startResult = (currentPage - 1) * pageSize + 1;
-  const endResult = Math.min(currentPage * pageSize, totalResults);
+type PageItem = number | 'gap';
 
-  // Generate page numbers to show
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const showPages = 5;
+/** First, last, and the pages around the current one, with gaps between runs. */
+function pageItems(current: number, total: number): PageItem[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
-    if (totalPages <= showPages + 2) {
-      // Show all pages
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Always show first page
-      pages.push(1);
+  const start = current <= 4 ? 2 : current >= total - 3 ? total - 4 : current - 1;
+  const end = current <= 4 ? 5 : current >= total - 3 ? total - 1 : current + 1;
 
-      // Calculate range around current page
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
+  const items: PageItem[] = [1];
+  if (start > 2) items.push('gap');
+  for (let page = start; page <= end; page++) items.push(page);
+  if (end < total - 1) items.push('gap');
+  items.push(total);
+  return items;
+}
 
-      // Adjust if at the edges
-      if (currentPage <= 3) {
-        end = Math.min(totalPages - 1, 4);
-      }
-      if (currentPage >= totalPages - 2) {
-        start = Math.max(2, totalPages - 3);
-      }
+const navButton =
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors';
 
-      // Add ellipsis before if needed
-      if (start > 2) {
-        pages.push('...');
-      }
-
-      // Add middle pages
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      // Add ellipsis after if needed
-      if (end < totalPages - 1) {
-        pages.push('...');
-      }
-
-      // Always show last page
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
+export default function Pagination({ currentPage, totalResults, pageSize, onPageChange }: PaginationProps) {
+  const totalPages = Math.ceil(totalResults / pageSize);
   if (totalPages <= 1) return null;
 
+  const first = (currentPage - 1) * pageSize + 1;
+  const last = Math.min(currentPage * pageSize, totalResults);
+
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
       <p className="text-sm text-slate-600">
-        Showing <span className="font-medium">{startResult.toLocaleString()}</span> to{' '}
-        <span className="font-medium">{endResult.toLocaleString()}</span> of{' '}
-        <span className="font-medium">{totalResults.toLocaleString()}</span> results
+        <span className="font-medium text-slate-900">{formatCount(first)}</span>–
+        <span className="font-medium text-slate-900">{formatCount(last)}</span> of{' '}
+        <span className="font-medium text-slate-900">{formatCount(totalResults)}</span>
       </p>
 
-      <nav className="flex items-center gap-1">
+      <nav aria-label="Pagination" className="flex items-center gap-1">
         <button
+          type="button"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Previous page"
+          className={`${navButton} text-slate-600 hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40`}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        {getPageNumbers().map((page, index) => (
-          page === '...' ? (
-            <span key={`ellipsis-${index}`} className="px-3 py-2 text-slate-400">
-              ...
+        {pageItems(currentPage, totalPages).map((item, i) =>
+          item === 'gap' ? (
+            <span key={`gap-${i}`} className="px-1 text-slate-400" aria-hidden="true">
+              …
             </span>
           ) : (
             <button
-              key={page}
-              onClick={() => onPageChange(page as number)}
-              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                currentPage === page
-                  ? 'bg-texas-blue text-white'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              key={item}
+              type="button"
+              onClick={() => onPageChange(item)}
+              aria-current={item === currentPage ? 'page' : undefined}
+              aria-label={`Page ${item}`}
+              className={`${navButton} ${
+                item === currentPage ? 'bg-nc-blue text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
-              {page}
+              {formatCount(item)}
             </button>
           )
-        ))}
+        )}
 
         <button
+          type="button"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Next page"
+          className={`${navButton} text-slate-600 hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40`}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>

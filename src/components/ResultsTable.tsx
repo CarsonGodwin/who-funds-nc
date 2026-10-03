@@ -1,11 +1,10 @@
-import { useState, useMemo } from 'react';
-import { formatCurrency, formatDate } from '../lib/search';
-import type { Contribution, Filer, Expenditure, SortParams } from '../lib/search';
+import type { ReactNode } from 'react';
+import { formatAmount, formatCount, formatCurrency, formatDate, humanize } from '../lib/format';
+import { committeeUrl, donorSearchUrl } from '../lib/url';
+import type { FilerWithTotals } from '../lib/queries';
+import type { Contribution, Expenditure, SortParams } from '../lib/types';
 
-// ============================================
-// EXPORTED SORTING UTILITIES
-// These can be imported by other components
-// ============================================
+// ---- Sorting helpers (also used by the donor and Expert Mode tables) --------
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -14,377 +13,330 @@ export interface SortState {
   direction: SortDirection;
 }
 
-// Sort indicator arrow component
-export function SortIndicator({ direction }: { direction: SortDirection }) {
-  if (!direction) {
-    return (
-      <svg className="w-4 h-4 text-slate-300 ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-      </svg>
-    );
-  }
-  return direction === 'asc' ? (
-    <svg className="w-4 h-4 text-texas-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-    </svg>
-  ) : (
-    <svg className="w-4 h-4 text-texas-blue ml-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+/** Click cycle for a column header: ascending, descending, then back to the default order. */
+export function nextSort(current: SortState, column: string): SortState {
+  if (current.column !== column) return { column, direction: 'asc' };
+  if (current.direction === 'asc') return { column, direction: 'desc' };
+  return { column: null, direction: null };
+}
+
+function SortIcon({ direction }: { direction: SortDirection }) {
+  const path =
+    direction === 'asc' ? 'M5 15l7-7 7 7' : direction === 'desc' ? 'M19 9l-7 7-7-7' : 'M8 9l4-4 4 4m0 6l-4 4-4-4';
+  return (
+    <svg
+      className={`h-3.5 w-3.5 shrink-0 ${direction ? 'text-nc-blue' : 'text-slate-300 group-hover:text-slate-400'}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
     </svg>
   );
 }
 
-// Sortable header component
 export function SortableHeader({
   label,
   column,
   sortState,
   onSort,
-  className = ''
+  className = '',
+  align = 'left',
 }: {
   label: string;
   column: string;
   sortState: SortState;
   onSort: (column: string) => void;
   className?: string;
+  align?: 'left' | 'right';
 }) {
-  const isActive = sortState.column === column;
+  const direction = sortState.column === column ? sortState.direction : null;
   return (
     <th
-      className={`px-4 py-3 text-sm font-semibold text-slate-900 cursor-pointer hover:bg-slate-100 select-none transition-colors ${className}`}
-      onClick={() => onSort(column)}
+      scope="col"
+      className={className}
+      aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : undefined}
     >
-      <span className="flex items-center">
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className={`group inline-flex items-center gap-1 uppercase hover:text-slate-900 ${align === 'right' ? 'flex-row-reverse' : ''}`}
+      >
         {label}
-        <SortIndicator direction={isActive ? sortState.direction : null} />
-      </span>
+        <SortIcon direction={direction} />
+      </button>
     </th>
   );
 }
 
-// Generic sort function for client-side sorting
+/** Client-side sort, for result sets that are already fully loaded. */
 export function sortData<T>(data: T[], sortState: SortState): T[] {
-  if (!sortState.column || !sortState.direction) return data;
+  const { column, direction } = sortState;
+  if (!column || !direction) return data;
+  const sign = direction === 'asc' ? 1 : -1;
 
   return [...data].sort((a, b) => {
-    const aVal = (a as any)[sortState.column!];
-    const bVal = (b as any)[sortState.column!];
-
-    // Handle null/undefined
+    const aVal = (a as Record<string, unknown>)[column];
+    const bVal = (b as Record<string, unknown>)[column];
     if (aVal == null && bVal == null) return 0;
-    if (aVal == null) return sortState.direction === 'asc' ? -1 : 1;
-    if (bVal == null) return sortState.direction === 'asc' ? 1 : -1;
+    if (aVal == null) return -sign;
+    if (bVal == null) return sign;
 
-    // Handle numbers (including BigInt from DuckDB)
     const aNum = typeof aVal === 'bigint' ? Number(aVal) : aVal;
     const bNum = typeof bVal === 'bigint' ? Number(bVal) : bVal;
-    if (typeof aNum === 'number' && typeof bNum === 'number') {
-      return sortState.direction === 'asc' ? aNum - bNum : bNum - aNum;
-    }
-
-    // Handle strings (case-insensitive)
-    const aStr = String(aVal).toLowerCase();
-    const bStr = String(bVal).toLowerCase();
-    const comparison = aStr.localeCompare(bStr);
-    return sortState.direction === 'asc' ? comparison : -comparison;
+    if (typeof aNum === 'number' && typeof bNum === 'number') return (aNum - bNum) * sign;
+    return String(aVal).localeCompare(String(bVal), undefined, { sensitivity: 'base' }) * sign;
   });
 }
 
-// ============================================
-// RESULTS TABLE COMPONENT
-// ============================================
+// ---- Column definitions ------------------------------------------------------
 
-// Base props shared by all table types
-interface BaseTableProps {
+interface Column<T> {
+  key: string;
+  label: string;
+  /** Server-side sort column; omit for unsortable columns. */
+  sortKey?: string;
+  align?: 'left' | 'right';
+  /** Extra classes for both th and td, e.g. to hide a column on small screens. */
+  className?: string;
+  render: (row: T) => ReactNode;
+}
+
+const location = (city?: string, state?: string) => [city, state].filter(Boolean).join(', ');
+
+const subtitle = (text: ReactNode) => <div className="mt-0.5 text-xs text-slate-500">{text}</div>;
+
+function contributionColumns(hideRecipient: boolean): Column<Contribution>[] {
+  const columns: Column<Contribution>[] = [
+    {
+      key: 'contributor',
+      label: 'Contributor',
+      sortKey: 'contributor_name',
+      render: (c) => (
+        <>
+          <a href={donorSearchUrl(c.contributor_name || '')} className="link">
+            {c.contributor_name || 'Unknown'}
+          </a>
+          {(c.contributor_employer || c.contributor_occupation) &&
+            subtitle([...new Set([c.contributor_occupation, c.contributor_employer].filter(Boolean))].join(' · '))}
+        </>
+      ),
+    },
+    {
+      key: 'recipient',
+      label: 'Recipient',
+      sortKey: 'filer_name',
+      render: (c) => (
+        <a href={committeeUrl(c.filer_id)} className="text-slate-700 hover:text-nc-blue hover:underline">
+          {c.filer_name || c.filer_id}
+        </a>
+      ),
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      sortKey: 'amount',
+      align: 'right',
+      render: (c) => <span className="font-semibold text-emerald-700">{formatAmount(c.amount)}</span>,
+    },
+    { key: 'date', label: 'Date', sortKey: 'date', className: 'whitespace-nowrap', render: (c) => formatDate(c.date) },
+    {
+      key: 'location',
+      label: 'Location',
+      sortKey: 'contributor_city',
+      className: 'hidden md:table-cell',
+      render: (c) => <span className="text-slate-600">{location(c.contributor_city, c.contributor_state)}</span>,
+    },
+  ];
+  return hideRecipient ? columns.filter((c) => c.key !== 'recipient') : columns;
+}
+
+const FILER_COLUMNS: Column<FilerWithTotals>[] = [
+  {
+    key: 'name',
+    label: 'Committee',
+    sortKey: 'name',
+    render: (f) => {
+      const tags = [f.party, f.office_held || f.office_sought].filter(Boolean) as string[];
+      return (
+        <>
+          <a href={committeeUrl(f.id)} className="link">
+            {f.name}
+          </a>
+          {/* Location has its own column on wider screens. */}
+          <div className="md:hidden">{subtitle(location(f.city, f.state))}</div>
+          {tags.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {tags.map((tag) => (
+                <span key={tag} className="badge">
+                  {humanize(tag)}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      );
+    },
+  },
+  {
+    key: 'location',
+    label: 'Location',
+    sortKey: 'city',
+    className: 'hidden md:table-cell',
+    render: (f) => <span className="text-slate-600">{location(f.city, f.state)}</span>,
+  },
+  {
+    key: 'raised',
+    label: 'Raised',
+    sortKey: 'total_raised',
+    align: 'right',
+    render: (f) => <span className="font-semibold text-emerald-700">{formatCurrency(f.total_raised)}</span>,
+  },
+  {
+    key: 'contributions',
+    label: 'Contributions',
+    sortKey: 'contribution_count',
+    align: 'right',
+    className: 'hidden sm:table-cell',
+    render: (f) => formatCount(f.contribution_count),
+  },
+  {
+    key: 'id',
+    label: 'Filer ID',
+    className: 'hidden lg:table-cell',
+    render: (f) => <span className="font-mono text-xs whitespace-nowrap text-slate-500">{f.id}</span>,
+  },
+];
+
+const EXPENDITURE_COLUMNS: Column<Expenditure>[] = [
+  {
+    key: 'payer',
+    label: 'Paid by',
+    sortKey: 'filer_name',
+    render: (e) => (
+      <a href={committeeUrl(e.filer_id)} className="link">
+        {e.filer_name || e.filer_id}
+      </a>
+    ),
+  },
+  {
+    key: 'payee',
+    label: 'Payee',
+    sortKey: 'payee_name',
+    render: (e) => (
+      <>
+        <span className="font-medium text-slate-900">{e.payee_name || 'Unknown'}</span>
+        {e.description && <div className="max-w-xs truncate">{subtitle(e.description)}</div>}
+      </>
+    ),
+  },
+  {
+    key: 'amount',
+    label: 'Amount',
+    sortKey: 'amount',
+    align: 'right',
+    render: (e) => <span className="font-semibold text-nc-red">{formatAmount(e.amount)}</span>,
+  },
+  { key: 'date', label: 'Date', sortKey: 'date', className: 'whitespace-nowrap', render: (e) => formatDate(e.date) },
+  {
+    key: 'category',
+    label: 'Category',
+    sortKey: 'category',
+    className: 'hidden md:table-cell',
+    render: (e) => <span className="text-slate-600">{e.category || '—'}</span>,
+  },
+];
+
+// ---- Table -------------------------------------------------------------------
+
+interface BaseProps {
   loading?: boolean;
-  // Server-side sorting: parent controls sort state
-  sortState?: SortParams | null;
-  onSortChange?: (sort: SortParams | null) => void;
+  /** Server-side sort state; headers are only clickable when onSortChange is given. */
+  sort?: SortParams;
+  onSortChange?: (sort: SortParams | undefined) => void;
+  emptyMessage?: string;
 }
 
-interface ContributionsTableProps extends BaseTableProps {
-  type: 'contributions';
-  data: Contribution[];
-}
-
-interface FilersTableProps extends BaseTableProps {
-  type: 'filers';
-  data: Filer[];
-}
-
-interface ExpendituresTableProps extends BaseTableProps {
-  type: 'expenditures';
-  data: Expenditure[];
-}
-
-type ResultsTableProps = ContributionsTableProps | FilersTableProps | ExpendituresTableProps;
-
-function LoadingRow({ cols }: { cols: number }) {
-  return (
-    <tr className="animate-pulse">
-      {Array.from({ length: cols }).map((_, i) => (
-        <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-        </td>
-      ))}
-    </tr>
+type ResultsTableProps = BaseProps &
+  (
+    | { type: 'contributions'; data: Contribution[]; hideRecipient?: boolean }
+    | { type: 'filers'; data: FilerWithTotals[] }
+    | { type: 'expenditures'; data: Expenditure[] }
   );
-}
+
+const SKELETON_ROWS = 6;
 
 export default function ResultsTable(props: ResultsTableProps) {
-  const { type, data, loading, sortState: parentSortState, onSortChange } = props;
+  const { loading, sort, onSortChange, emptyMessage = 'No results match your search.' } = props;
 
-  // Use local state for client-side sorting, or controlled state for server-side
-  const [localSortState, setLocalSortState] = useState<SortState>({ column: null, direction: null });
+  // Each branch pairs columns with rows of the same type; widened here so one renderer serves all three.
+  const [columns, rows, rowKey] = (
+    props.type === 'contributions'
+      ? [contributionColumns(Boolean(props.hideRecipient)), props.data, (r: Contribution) => r.contribution_id]
+      : props.type === 'filers'
+        ? // Some source rows share a placeholder ID, so include the name to keep keys unique.
+          [FILER_COLUMNS, props.data, (r: FilerWithTotals) => `${r.id}|${r.name}`]
+        : [EXPENDITURE_COLUMNS, props.data, (r: Expenditure) => r.expenditure_id]
+  ) as [Column<unknown>[], unknown[], (row: unknown) => string];
 
-  // Determine if we're in server-side sorting mode
-  const isServerSide = !!onSortChange;
-
-  // Convert parent sort state to local format for display
-  const effectiveSortState: SortState = isServerSide && parentSortState
-    ? { column: parentSortState.column, direction: parentSortState.direction }
-    : localSortState;
-
+  const sortState: SortState = sort ? { column: sort.column, direction: sort.direction } : { column: null, direction: null };
   const handleSort = (column: string) => {
-    if (isServerSide) {
-      // Server-side sorting: notify parent
-      if (parentSortState?.column !== column) {
-        onSortChange({ column, direction: 'asc' });
-      } else if (parentSortState.direction === 'asc') {
-        onSortChange({ column, direction: 'desc' });
-      } else {
-        onSortChange(null); // Reset to default
-      }
-    } else {
-      // Client-side sorting: use local state
-      setLocalSortState(prev => {
-        if (prev.column !== column) {
-          return { column, direction: 'asc' };
-        }
-        if (prev.direction === 'asc') {
-          return { column, direction: 'desc' };
-        }
-        return { column: null, direction: null };
-      });
-    }
+    const next = nextSort(sortState, column);
+    onSortChange?.(next.column && next.direction ? { column: next.column, direction: next.direction } : undefined);
   };
 
-  // Only sort client-side if NOT in server-side mode
-  const sortedContributions = useMemo(
-    () => type === 'contributions'
-      ? (isServerSide ? data as Contribution[] : sortData(data as Contribution[], localSortState))
-      : [],
-    [type, data, localSortState, isServerSide]
-  );
-  const sortedFilers = useMemo(
-    () => type === 'filers'
-      ? (isServerSide ? data as Filer[] : sortData(data as Filer[], localSortState))
-      : [],
-    [type, data, localSortState, isServerSide]
-  );
-  const sortedExpenditures = useMemo(
-    () => type === 'expenditures'
-      ? (isServerSide ? data as Expenditure[] : sortData(data as Expenditure[], localSortState))
-      : [],
-    [type, data, localSortState, isServerSide]
-  );
+  const cellClass = (col: Column<unknown>) => `${col.align === 'right' ? 'text-right' : ''} ${col.className ?? ''}`;
 
-  if (type === 'contributions') {
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 text-left">
-              <SortableHeader label="Contributor" column="contributor_name" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Recipient" column="filer_name" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Amount" column="amount" sortState={effectiveSortState} onSort={handleSort} className="text-right" />
-              <SortableHeader label="Date" column="date" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Location" column="contributor_city" sortState={effectiveSortState} onSort={handleSort} className="hidden md:table-cell" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading ? (
-              <>
-                <LoadingRow cols={5} />
-                <LoadingRow cols={5} />
-                <LoadingRow cols={5} />
-              </>
-            ) : sortedContributions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                  No contributions found. Try adjusting your search criteria.
-                </td>
-              </tr>
-            ) : (
-              sortedContributions.map((contribution) => (
-                <tr key={contribution.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <a
-                      href={`/search/contributors?q=${encodeURIComponent(contribution.contributor_name || '')}${contribution.contributor_city ? `&city=${encodeURIComponent(contribution.contributor_city)}` : ''}`}
-                      className="font-medium text-texas-blue hover:text-blue-700 text-sm block"
-                    >
-                      {contribution.contributor_name || 'Unknown'}
-                    </a>
-                    {contribution.contributor_employer && (
-                      <div className="text-xs text-slate-500">
-                        {contribution.contributor_employer}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={`/candidate?id=${contribution.filer_id}`}
-                      className="text-sm text-texas-blue hover:text-blue-700"
-                    >
-                      {contribution.filer_name || contribution.filer_id}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-medium text-green-700 text-sm">
-                      {formatCurrency(contribution.amount)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {formatDate(contribution.date)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 hidden md:table-cell">
-                    {contribution.contributor_city}
-                    {contribution.contributor_state && `, ${contribution.contributor_state}`}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  if (type === 'filers') {
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 text-left">
-              <SortableHeader label="Name" column="name" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Type" column="type" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Office" column="office_held" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Party" column="party" sortState={effectiveSortState} onSort={handleSort} />
-              <SortableHeader label="Status" column="status" sortState={effectiveSortState} onSort={handleSort} />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading ? (
-              <>
-                <LoadingRow cols={5} />
-                <LoadingRow cols={5} />
-                <LoadingRow cols={5} />
-              </>
-            ) : sortedFilers.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                  No filers found. Try adjusting your search criteria.
-                </td>
-              </tr>
-            ) : (
-              sortedFilers.map((filer) => (
-                <tr key={filer.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <a
-                      href={`/candidate?id=${filer.id}`}
-                      className="font-medium text-texas-blue hover:text-blue-700 text-sm"
-                    >
-                      {filer.name}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {filer.type || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {filer.office_held || '—'}
-                    {filer.office_district && ` - District ${filer.office_district}`}
-                  </td>
-                  <td className="px-4 py-3">
-                    {filer.party && (
-                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                        filer.party === 'REPUBLICAN' ? 'bg-red-100 text-red-800' :
-                        filer.party === 'DEMOCRAT' ? 'bg-blue-100 text-blue-800' :
-                        'bg-slate-100 text-slate-800'
-                      }`}>
-                        {filer.party}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {filer.status || '—'}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  // Expenditures table
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="data-table">
         <thead>
-          <tr className="border-b border-slate-200 text-left">
-            <SortableHeader label="Payer" column="filer_name" sortState={effectiveSortState} onSort={handleSort} />
-            <SortableHeader label="Payee" column="payee_name" sortState={effectiveSortState} onSort={handleSort} />
-            <SortableHeader label="Amount" column="amount" sortState={effectiveSortState} onSort={handleSort} className="text-right" />
-            <SortableHeader label="Date" column="date" sortState={effectiveSortState} onSort={handleSort} />
-            <SortableHeader label="Category" column="category" sortState={effectiveSortState} onSort={handleSort} className="hidden md:table-cell" />
+          <tr>
+            {columns.map((col) =>
+              col.sortKey && onSortChange ? (
+                <SortableHeader
+                  key={col.key}
+                  label={col.label}
+                  column={col.sortKey}
+                  sortState={sortState}
+                  onSort={handleSort}
+                  align={col.align}
+                  className={cellClass(col)}
+                />
+              ) : (
+                <th key={col.key} scope="col" className={cellClass(col)}>
+                  {col.label}
+                </th>
+              )
+            )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
-          {loading ? (
-            <>
-              <LoadingRow cols={5} />
-              <LoadingRow cols={5} />
-              <LoadingRow cols={5} />
-            </>
-          ) : sortedExpenditures.length === 0 ? (
+        <tbody className={loading && rows.length > 0 ? 'opacity-50 transition-opacity' : 'transition-opacity'} aria-busy={loading}>
+          {loading && rows.length === 0 ? (
+            Array.from({ length: SKELETON_ROWS }, (_, i) => (
+              <tr key={i}>
+                {columns.map((col) => (
+                  <td key={col.key} className={cellClass(col)}>
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                No expenditures found. Try adjusting your search criteria.
+              <td colSpan={columns.length} className="py-12 text-center text-slate-500">
+                {emptyMessage}
               </td>
             </tr>
           ) : (
-            sortedExpenditures.map((expenditure) => (
-              <tr key={expenditure.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <a
-                    href={`/candidate?id=${expenditure.filer_id}`}
-                    className="text-sm text-texas-blue hover:text-blue-700"
-                  >
-                    {expenditure.filer_name || expenditure.filer_id}
-                  </a>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-slate-900 text-sm">
-                    {expenditure.payee_name || 'Unknown'}
-                  </div>
-                  {expenditure.description && (
-                    <div className="text-xs text-slate-500 truncate max-w-xs">
-                      {expenditure.description}
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="font-medium text-texas-red text-sm">
-                    {formatCurrency(expenditure.amount)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600">
-                  {formatDate(expenditure.date)}
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 hidden md:table-cell">
-                  {expenditure.category || '—'}
-                </td>
+            rows.map((row) => (
+              <tr key={rowKey(row)}>
+                {columns.map((col) => (
+                  <td key={col.key} className={cellClass(col)}>
+                    {col.render(row)}
+                  </td>
+                ))}
               </tr>
             ))
           )}

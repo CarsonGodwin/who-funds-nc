@@ -1,10 +1,11 @@
 {
-  "name": "armadollar",
+  "name": "who-funds-nc",
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "npm run build && npx wrangler deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

@@ -41,6 +41,3 @@ __pycache__/
 *.pyc
 venv/
 .venv/
-
-# Supabase
-supabase/.temp/

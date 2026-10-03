@@ -1,4 +1,4 @@
-# Armadollar NC
+# Who Funds NC
 
 A searchable web interface for North Carolina campaign finance data, running entirely in the browser using DuckDB-WASM.
 
@@ -216,7 +216,6 @@ Recommended checks before upload:
 ## Notes on NC customization
 
 - NC filer/office/party enums are defined in `src/components/AdvancedSearch.tsx` and `src/components/FacetedFilters.tsx`.
-- Party tagging is disabled for NC v1 (`src/lib/supabase.ts` is a no-op stub).
 - Geography filters now use `public/nc_geo.json` and `src/lib/nc-geo.ts`.
 
 ## Outside this repo

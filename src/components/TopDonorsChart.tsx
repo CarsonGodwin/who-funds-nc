@@ -1,77 +1,42 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { formatCurrency } from '../lib/search';
+import { formatCount, formatCurrency } from '../lib/format';
+import { donorSearchUrl } from '../lib/url';
+import type { TopDonor } from '../lib/queries';
 
-interface TopDonor {
-  name: string;
-  total: number;
-  count: number;
-}
-
-interface TopDonorsChartProps {
-  donors: TopDonor[];
-  title?: string;
-}
-
-const COLORS = ['#002868', '#1a3a7a', '#344d8c', '#4e609e', '#6873b0', '#8286c2'];
-
-export default function TopDonorsChart({ donors, title = 'Top Donors' }: TopDonorsChartProps) {
-  if (donors.length === 0) {
-    return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-        <p className="text-slate-500 text-center py-8">No donation data available</p>
-      </div>
-    );
-  }
-
-  // Truncate long names
-  const chartData = donors.map((donor) => ({
-    ...donor,
-    displayName: donor.name.length > 25 ? donor.name.slice(0, 22) + '...' : donor.name,
-  }));
+/** Ranked list with inline bars; easier to read on small screens than a bar chart with long names. */
+export default function TopDonorsChart({ donors, loading }: { donors: TopDonor[]; loading?: boolean }) {
+  const max = donors[0]?.total || 1;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          >
-            <XAxis
-              type="number"
-              tickFormatter={(value) => formatCurrency(value)}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              type="category"
-              dataKey="displayName"
-              width={150}
-              tick={{ fontSize: 11 }}
-            />
-            <Tooltip
-              formatter={(value) => formatCurrency(Number(value) || 0)}
-              labelFormatter={(label, payload) => {
-                const first = payload?.[0] as { payload?: { name?: string } } | undefined;
-                return first?.payload?.name ?? String(label ?? '');
-              }}
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '8px 12px',
-              }}
-            />
-            <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+    <div className="card h-full">
+      <div className="card-header">
+        <h2 className="card-title">Top donors</h2>
+        <span className="text-xs text-slate-500">By total given</span>
       </div>
+      {donors.length === 0 ? (
+        <p className="px-5 py-12 text-center text-sm text-slate-500">{loading ? 'Loading…' : 'No contributions in this period.'}</p>
+      ) : (
+        <ol className={`space-y-3 p-5 ${loading ? 'opacity-50' : ''}`}>
+          {donors.map((donor, i) => (
+            <li key={donor.name} className="text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <a href={donorSearchUrl(donor.name)} className="min-w-0 truncate text-slate-800 hover:text-nc-blue hover:underline">
+                  <span className="mr-2 text-xs text-slate-400 tabular-nums">{i + 1}.</span>
+                  {donor.name}
+                </a>
+                <span className="shrink-0 font-semibold text-slate-900 tabular-nums">{formatCurrency(donor.total)}</span>
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-nc-blue" style={{ width: `${(donor.total / max) * 100}%` }} />
+                </div>
+                <span className="w-16 shrink-0 text-right text-xs text-slate-500 tabular-nums">
+                  {formatCount(donor.count)} {donor.count === 1 ? 'gift' : 'gifts'}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

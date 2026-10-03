@@ -1,22 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="6" fill="#002868"/>
-  <!-- Stylized armadillo - simplified shell pattern with dollar accent -->
-  <g fill="#ffffff">
-    <!-- Body/shell curves -->
-    <ellipse cx="14" cy="16" rx="9" ry="7"/>
-    <!-- Shell bands -->
-    <path d="M8 12 Q14 10, 20 12" stroke="#002868" stroke-width="1.5" fill="none"/>
-    <path d="M7 15 Q14 13, 21 15" stroke="#002868" stroke-width="1.5" fill="none"/>
-    <path d="M7 18 Q14 16, 21 18" stroke="#002868" stroke-width="1.5" fill="none"/>
-    <!-- Head -->
-    <ellipse cx="23" cy="16" rx="3" ry="2.5"/>
-    <!-- Tail -->
-    <path d="M5 16 Q3 16, 3 14" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <!-- Legs -->
-    <rect x="9" y="21" width="2" height="3" rx="1"/>
-    <rect x="15" y="21" width="2" height="3" rx="1"/>
-  </g>
-  <!-- Dollar sign accent -->
-  <circle cx="25" cy="7" r="5" fill="#16a34a"/>
-  <text x="25" y="10" text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="Arial">$</text>
+  <!-- Who Funds NC: a magnifying glass over a dollar sign -->
+  <rect width="32" height="32" rx="7" fill="#002868"/>
+  <line x1="20.5" y1="20.5" x2="26.5" y2="26.5" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="14" cy="14" r="9" fill="#ffffff"/>
+  <path d="M14 7.6V20.4" stroke="#002868" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M17.2 10.6C16.5 9.7 15.3 9.3 14 9.3C12.3 9.3 10.9 10.2 10.9 11.6C10.9 14.6 17.1 13.3 17.1 16.4C17.1 17.9 15.7 18.8 14 18.8C12.6 18.8 11.4 18.3 10.7 17.3" stroke="#002868" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

@@ -1,28 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
 import ContributorSearch from '../../components/ContributorSearch';
-
-const query = Astro.url.searchParams.get('q') || '';
 ---
 
-<BaseLayout title="Search Donors" description="Search campaign finance contributions by donor name">
-  <div class="bg-slate-50 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Page Header -->
-      <div class="mb-8">
-        <nav class="text-sm text-slate-500 mb-2">
-          <a href="/" class="hover:text-texas-blue">Home</a>
-          <span class="mx-2">›</span>
-          <span class="text-slate-900">Donor Search</span>
-        </nav>
-        <h1 class="text-3xl font-bold text-slate-900">Search Donors</h1>
-        <p class="text-slate-600 mt-2">
-          Find all political contributions made by individuals and organizations in North Carolina
-        </p>
-      </div>
-
-      <!-- Search Component -->
-      <ContributorSearch client:load initialQuery={query} />
-    </div>
+<BaseLayout title="Donors" description="Search North Carolina campaign contributions by donor name">
+  <div class="page-container py-8">
+    <PageHeader
+      title="Donors"
+      description="Find every itemized contribution made by an individual or organization to North Carolina committees."
+    />
+    <ContributorSearch client:load />
   </div>
 </BaseLayout>
