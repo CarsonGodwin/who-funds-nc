@@ -16,24 +16,21 @@ export default function AggregationPanel({ aggregation, onChange, dataSource, fi
   const metrics: Metric[] = AMOUNT_FIELD[dataSource] ? ['sum', 'count', 'avg', 'min', 'max'] : ['count'];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <div className="flex items-center gap-3 mb-3">
+    <section className="card">
+      <label className="flex cursor-pointer items-center gap-3 px-5 py-4">
         <input
           type="checkbox"
-          id="enableAggregation"
           checked={aggregation.enabled}
           onChange={(e) => onChange((prev) => ({ ...prev, enabled: e.target.checked }))}
-          className="w-4 h-4 text-nc-blue"
+          className="h-4 w-4 accent-nc-blue"
         />
-        <label htmlFor="enableAggregation" className="font-semibold text-slate-900">
-          Enable Aggregation / Group By
-        </label>
-      </div>
+        <span className="card-title">Group and aggregate</span>
+      </label>
 
       {aggregation.enabled && (
-        <div className="space-y-4 pt-3 border-t border-slate-200">
+        <div className="space-y-4 border-t border-slate-200 p-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Group By Fields</label>
+            <p className="field-label">Group by</p>
             <div className="flex flex-wrap gap-2">
               {fields.map((f) => (
                 <label key={f.value} className="flex items-center gap-1">
@@ -41,17 +38,17 @@ export default function AggregationPanel({ aggregation, onChange, dataSource, fi
                     type="checkbox"
                     checked={aggregation.groupBy.includes(f.value)}
                     onChange={(e) => onChange((prev) => ({ ...prev, groupBy: toggle(prev.groupBy, f.value, e.target.checked) }))}
-                    className="w-3 h-3"
+                    className="h-3.5 w-3.5 accent-nc-blue"
                   />
-                  <span className="text-sm">{f.label}</span>
+                  <span className="text-sm text-slate-700">{f.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Metrics</label>
+              <p className="field-label">Metrics</p>
               <div className="flex flex-wrap gap-2">
                 {metrics.map((metric) => (
                   <label key={metric} className="flex items-center gap-1">
@@ -59,21 +56,22 @@ export default function AggregationPanel({ aggregation, onChange, dataSource, fi
                       type="checkbox"
                       checked={aggregation.metrics.includes(metric)}
                       onChange={(e) => onChange((prev) => ({ ...prev, metrics: toggle(prev.metrics, metric, e.target.checked) }))}
-                      className="w-3 h-3"
+                      className="h-3.5 w-3.5 accent-nc-blue"
                     />
-                    <span className="text-sm">{METRIC_LABELS[metric]}</span>
+                    <span className="text-sm text-slate-700">{METRIC_LABELS[metric]}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Sort By</label>
+              <p className="field-label">Sort by</p>
               <div className="flex gap-2">
                 <select
                   value={aggregation.sortBy}
                   onChange={(e) => onChange((prev) => ({ ...prev, sortBy: e.target.value as Metric }))}
-                  className="px-2 py-1 border border-slate-300 rounded text-sm bg-white"
+                  aria-label="Sort by metric"
+                  className="input w-auto py-1.5"
                 >
                   {metrics.map((metric) => (
                     <option key={metric} value={metric}>{METRIC_LABELS[metric]}</option>
@@ -82,7 +80,8 @@ export default function AggregationPanel({ aggregation, onChange, dataSource, fi
                 <select
                   value={aggregation.sortDir}
                   onChange={(e) => onChange((prev) => ({ ...prev, sortDir: e.target.value as 'asc' | 'desc' }))}
-                  className="px-2 py-1 border border-slate-300 rounded text-sm bg-white"
+                  aria-label="Sort direction"
+                  className="input w-auto py-1.5"
                 >
                   <option value="desc">Descending</option>
                   <option value="asc">Ascending</option>
@@ -92,6 +91,6 @@ export default function AggregationPanel({ aggregation, onChange, dataSource, fi
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

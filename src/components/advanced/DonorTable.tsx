@@ -1,68 +1,82 @@
-import { useMemo, useState } from 'react';
-import { SortableHeader, sortData, type SortState } from '../ResultsTable';
-import { formatCurrency, formatDate } from '../../lib/format';
+import { SortableHeader, nextSort, type SortState } from '../ResultsTable';
+import { formatCount, formatCurrency, formatDate } from '../../lib/format';
+import { donorSearchUrl } from '../../lib/url';
 import type { AggregatedDonor } from '../../lib/advanced-search';
+import type { SortParams } from '../../lib/types';
 
-const nextSort = (prev: SortState, column: string): SortState => {
-  if (prev.column !== column) return { column, direction: 'asc' };
-  if (prev.direction === 'asc') return { column, direction: 'desc' };
-  return { column: null, direction: null };
-};
+const COLUMNS = [
+  { column: 'contributor_name', label: 'Donor', align: 'left' as const },
+  { column: 'num_contributions', label: 'Gifts', align: 'right' as const },
+  { column: 'total_amount', label: 'Total', align: 'right' as const },
+  { column: 'avg_amount', label: 'Average', align: 'right' as const, className: 'hidden sm:table-cell' },
+  { column: 'first_date', label: 'First – last gift', align: 'left' as const, className: 'hidden md:table-cell' },
+];
 
-export default function DonorTable({ donors, loading }: { donors: AggregatedDonor[]; loading: boolean }) {
-  const [sortState, setSortState] = useState<SortState>({ column: null, direction: null });
-  const sorted = useMemo(() => sortData(donors, sortState), [donors, sortState]);
-  const onSort = (column: string) => setSortState((prev) => nextSort(prev, column));
+interface DonorTableProps {
+  donors: AggregatedDonor[];
+  loading: boolean;
+  sort?: SortParams;
+  onSortChange: (sort: SortParams | undefined) => void;
+}
+
+/** Contributions grouped by donor name; sorting runs in the database so it covers every page. */
+export default function DonorTable({ donors, loading, sort, onSortChange }: DonorTableProps) {
+  const sortState: SortState = sort ? { column: sort.column, direction: sort.direction } : { column: null, direction: null };
+  const onSort = (column: string) => {
+    const next = nextSort(sortState, column);
+    onSortChange(next.column && next.direction ? { column: next.column, direction: next.direction } : undefined);
+  };
+  const cellClass = (col: (typeof COLUMNS)[number]) =>
+    `${col.align === 'right' ? 'text-right' : ''} ${'className' in col ? col.className : ''}`;
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="data-table">
         <thead>
-          <tr className="border-b border-slate-200 text-left">
-            <SortableHeader label="Donor Name" column="contributor_name" sortState={sortState} onSort={onSort} />
-            <SortableHeader label="# Contributions" column="num_contributions" sortState={sortState} onSort={onSort} className="text-right" />
-            <SortableHeader label="Total Amount" column="total_amount" sortState={sortState} onSort={onSort} className="text-right" />
-            <SortableHeader label="Avg Amount" column="avg_amount" sortState={sortState} onSort={onSort} className="text-right" />
-            <SortableHeader label="Date Range" column="first_date" sortState={sortState} onSort={onSort} className="hidden md:table-cell" />
+          <tr>
+            {COLUMNS.map((col) => (
+              <SortableHeader
+                key={col.column}
+                label={col.label}
+                column={col.column}
+                sortState={sortState}
+                onSort={onSort}
+                align={col.align}
+                className={cellClass(col)}
+              />
+            ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
-          {loading ? (
-            [1, 2, 3].map((i) => (
-              <tr key={i} className="animate-pulse">
-                {[1, 2, 3, 4, 5].map((j) => (
-                  <td key={j} className="px-4 py-3">
-                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+        <tbody className={loading && donors.length > 0 ? 'opacity-50' : ''} aria-busy={loading}>
+          {loading && donors.length === 0 ? (
+            Array.from({ length: 6 }, (_, i) => (
+              <tr key={i}>
+                {COLUMNS.map((col) => (
+                  <td key={col.column} className={cellClass(col)}>
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
                   </td>
                 ))}
               </tr>
             ))
-          ) : sorted.length === 0 ? (
+          ) : donors.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                No donors found matching your criteria. Try adjusting your filters.
+              <td colSpan={COLUMNS.length} className="py-12 text-center text-slate-500">
+                No donors match these filters.
               </td>
             </tr>
           ) : (
-            sorted.map((donor, idx) => (
-              <tr key={`${donor.contributor_name}-${idx}`} className="hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <a
-                    href={`${import.meta.env.BASE_URL}search/contributors?q=${encodeURIComponent(donor.contributor_name || '')}`}
-                    className="font-medium text-nc-blue hover:text-blue-700 text-sm block"
-                  >
+            donors.map((donor) => (
+              <tr key={donor.contributor_name ?? ''}>
+                <td>
+                  <a href={donorSearchUrl(donor.contributor_name || '')} className="link">
                     {donor.contributor_name || 'Unknown'}
                   </a>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="font-medium text-nc-blue text-sm">{Number(donor.num_contributions).toLocaleString()}</span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="font-medium text-green-700 text-sm">{formatCurrency(donor.total_amount)}</span>
-                </td>
-                <td className="px-4 py-3 text-right text-sm text-slate-600">{formatCurrency(donor.avg_amount)}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 hidden md:table-cell">
-                  {formatDate(donor.first_date)} - {formatDate(donor.last_date)}
+                <td className="text-right">{formatCount(donor.num_contributions)}</td>
+                <td className="text-right font-semibold text-emerald-700">{formatCurrency(donor.total_amount)}</td>
+                <td className="hidden text-right text-slate-600 sm:table-cell">{formatCurrency(donor.avg_amount)}</td>
+                <td className="hidden whitespace-nowrap text-slate-600 md:table-cell">
+                  {formatDate(donor.first_date)} – {formatDate(donor.last_date)}
                 </td>
               </tr>
             ))

@@ -1,121 +1,111 @@
 ---
+import { withBase } from '../lib/url';
+import '../styles/global.css';
+
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = "Search North Carolina campaign finance records" } = Astro.props;
+const { title, description = 'Search North Carolina campaign finance records' } = Astro.props;
+
+const NAV_LINKS = [
+  { path: 'search/committees', label: 'Committees', also: ['candidate'] },
+  { path: 'search/contributors', label: 'Donors', also: [] },
+  { path: 'advanced', label: 'List Builder', also: [] },
+  { path: 'query-builder', label: 'Expert Mode', also: [] },
+];
+
+// Highlight the current section; pages are static, so this is decided at build time.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const currentPath = Astro.url.pathname.slice(base.length).replace(/^\/|\/$/g, '');
+const isActive = (link: (typeof NAV_LINKS)[number]) => [link.path, ...link.also].includes(currentPath);
+const pageTitle = currentPath === '' ? 'Who Funds NC · North Carolina Campaign Finance' : `${title} · Who Funds NC`;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#002868" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <title>{title} | Armadollar</title>
-    <script>
-      function setActiveNavLink() {
-        const path = window.location.pathname;
-        const links = document.querySelectorAll('[data-nav-link]');
-        
-        links.forEach(link => {
-          const href = link.getAttribute('href');
-          const isActive = 
-            (href === '/advanced' && path === '/advanced') ||
-            (href === '/query-builder' && path === '/query-builder') ||
-            (href === '/search/contributors' && path === '/search/contributors') ||
-            (href === '/search/committees' && path === '/search/committees');
-          
-          if (isActive) {
-            link.classList.remove('text-blue-100');
-            link.classList.add('text-white');
-            if (link.classList.contains('button-style')) {
-              link.classList.remove('bg-white/10');
-              link.classList.add('bg-white/20');
-            }
-          } else {
-            link.classList.remove('text-white');
-            link.classList.add('text-blue-100');
-            if (link.classList.contains('button-style')) {
-              link.classList.remove('bg-white/20');
-              link.classList.add('bg-white/10');
-            }
-          }
-        });
-      }
-      
-      setActiveNavLink();
-      window.addEventListener('popstate', setActiveNavLink);
-    </script>
+    <title>{pageTitle}</title>
   </head>
-  <body class="min-h-screen flex flex-col">
-    <header class="bg-nc-blue text-white">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-          <a href="/" class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden">
-              <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none">
-                <g fill="#002868">
-                  <ellipse cx="14" cy="16" rx="9" ry="7"/>
-                  <path d="M8 12 Q14 10, 20 12" stroke="white" stroke-width="1.5" fill="none"/>
-                  <path d="M7 15 Q14 13, 21 15" stroke="white" stroke-width="1.5" fill="none"/>
-                  <path d="M7 18 Q14 16, 21 18" stroke="white" stroke-width="1.5" fill="none"/>
-                  <ellipse cx="23" cy="16" rx="3" ry="2.5"/>
-                  <path d="M5 16 Q3 16, 3 14" stroke="#002868" stroke-width="2" fill="none" stroke-linecap="round"/>
-                  <rect x="9" y="21" width="2" height="3" rx="1"/>
-                  <rect x="15" y="21" width="2" height="3" rx="1"/>
-                </g>
-                <circle cx="25" cy="7" r="5" fill="#16a34a"/>
-                <text x="25" y="10" text-anchor="middle" fill="white" font-size="7" font-weight="bold" font-family="Arial">$</text>
-              </svg>
-            </div>
-            <div>
-              <span class="text-lg font-semibold">Armadollar</span>
-              <span class="hidden sm:inline text-sm text-blue-200 ml-2">North Carolina Campaign Finance</span>
-            </div>
-          </a>
-          <div class="flex items-center gap-4 lg:gap-6">
-            <a href="/search/contributors" data-nav-link class="text-sm font-medium hover:text-white transition-colors hidden sm:block text-blue-100">
-              Donors
-            </a>
-            <a href="/search/committees" data-nav-link class="text-sm font-medium hover:text-white transition-colors hidden sm:block text-blue-100">
-              Committees
-            </a>
-            <a href="/query-builder" data-nav-link class="text-sm font-medium hover:text-white transition-colors text-blue-100">
-              Expert Mode
-            </a>
-            <a href="/advanced" data-nav-link class="button-style px-3 py-1.5 text-sm font-medium bg-white/10 rounded-lg transition-colors text-blue-100 hover:text-white">
-              List Builder
-            </a>
-          </div>
-        </div>
-      </nav>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-nc-blue focus:shadow-lg"
+    >
+      Skip to content
+    </a>
+
+    <header class="border-b border-white/10 bg-nc-blue text-white">
+      <div class="page-container flex flex-wrap items-center justify-between gap-x-6">
+        <a href={withBase('/')} class="flex h-16 items-center gap-3 rounded-lg">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white" aria-hidden="true">
+            <!-- Same mark as public/favicon.svg, inverted for the blue header. -->
+            <svg class="h-7 w-7" viewBox="0 0 32 32" fill="none">
+              <line x1="20.5" y1="20.5" x2="26.5" y2="26.5" stroke="#002868" stroke-width="4" stroke-linecap="round" />
+              <circle cx="14" cy="14" r="9" fill="#002868" />
+              <path d="M14 7.6V20.4" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+              <path
+                d="M17.2 10.6C16.5 9.7 15.3 9.3 14 9.3C12.3 9.3 10.9 10.2 10.9 11.6C10.9 14.6 17.1 13.3 17.1 16.4C17.1 17.9 15.7 18.8 14 18.8C12.6 18.8 11.4 18.3 10.7 17.3"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span class="leading-tight">
+            <span class="block text-lg font-semibold tracking-tight">Who Funds NC</span>
+            <span class="block text-xs text-blue-200">Campaign finance explorer</span>
+          </span>
+        </a>
+
+        <!-- On small screens the links drop to their own scrollable row instead of disappearing. -->
+        <nav aria-label="Main" class="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-2 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:px-0">
+          <ul class="flex gap-0.5 pb-3 sm:gap-1 sm:pb-0">
+            {NAV_LINKS.map((link) => (
+              <li>
+                <a
+                  href={withBase(link.path)}
+                  aria-current={isActive(link) ? 'page' : undefined}
+                  class:list={[
+                    'block rounded-lg px-2 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:px-3',
+                    isActive(link) ? 'bg-white/15 text-white' : 'text-blue-100 hover:bg-white/10 hover:text-white',
+                  ]}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
     </header>
 
-    <main class="flex-1">
+    <main id="main" class="flex-1">
       <slot />
     </main>
 
-    <footer class="bg-slate-900 text-slate-400 py-8 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-sm">
-            Data from the <a href="https://www.ncsbe.gov/campaign-finance" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300">North Carolina State Board of Elections</a>
-          </p>
-          <p class="text-sm">
-            Records from 2020 to present
-          </p>
-        </div>
+    <footer class="mt-16 border-t border-slate-200 bg-white">
+      <div class="page-container flex flex-col gap-2 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          Data from the
+          <a href="https://www.ncsbe.gov/campaign-finance" target="_blank" rel="noopener noreferrer" class="link">
+            North Carolina State Board of Elections</a
+          >. Records from 2020 to present.
+        </p>
+        <p>Searches run entirely in your browser.</p>
       </div>
     </footer>
   </body>
 </html>
-
-<style is:global>
-  @import "../styles/global.css";
-</style>

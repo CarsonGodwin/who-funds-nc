@@ -1,33 +1,49 @@
-import { useState, useEffect } from 'react';
-import { onInitProgressChange, waitForInit, clearCache, getCacheInfo, APPROX_DOWNLOAD_BYTES, type InitProgress } from '../lib/duckdb';
+import { useState, useEffect, type ReactNode } from 'react';
+import {
+  onInitProgressChange,
+  waitForInit,
+  clearCache,
+  getCacheInfo,
+  APPROX_DOWNLOAD_LABEL,
+  type InitProgress,
+} from '../lib/duckdb';
 import { formatBytes } from '../lib/parquet-cache';
 
-const APPROX_DOWNLOAD = `~${Math.round(APPROX_DOWNLOAD_BYTES / 1e6)} MB`;
+const STATUS_MESSAGES: Partial<Record<InitProgress['status'], string>> = {
+  'loading-wasm': 'Starting the database engine…',
+  'checking-cache': 'Checking for saved data…',
+  'loading-data': 'Preparing the data…',
+};
 
-interface DatabaseLoaderProps {
-  children: React.ReactNode;
+function statusMessage(progress: InitProgress): string {
+  if (progress.status === 'downloading') return 'Downloading campaign finance data…';
+  if (progress.cached) return 'Loading saved data…';
+  return STATUS_MESSAGES[progress.status] ?? 'Getting ready…';
 }
 
-export default function DatabaseLoader({ children }: DatabaseLoaderProps) {
+function detailMessage(progress: InitProgress): string {
+  if (progress.status === 'downloading' && progress.downloadedBytes && progress.totalBytes) {
+    return `${progress.currentFile}: ${formatBytes(progress.downloadedBytes)} of ${formatBytes(progress.totalBytes)}`;
+  }
+  if (progress.cached) return 'Using the copy saved in your browser from an earlier visit.';
+  return `The first visit downloads ${APPROX_DOWNLOAD_LABEL}; after that it loads from your browser's cache.`;
+}
+
+/** Renders `children` once the in-browser database is ready, with download progress until then. */
+export default function DatabaseLoader({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<InitProgress>({ status: 'idle', error: null });
-  const [cacheSize, setCacheSize] = useState<number>(0);
+  const [cacheSize, setCacheSize] = useState(0);
 
   useEffect(() => {
-    // Check cache size
-    getCacheInfo().then(info => setCacheSize(info.totalSize));
-
-    // Start initialization
+    getCacheInfo().then((info) => setCacheSize(info.totalSize));
     waitForInit().catch(() => {
-      // Error is handled by progress listener
+      // Reported through the progress listener.
     });
-
-    // Listen for progress changes
-    const unsubscribe = onInitProgressChange(setProgress);
-    return unsubscribe;
+    return onInitProgressChange(setProgress);
   }, []);
 
   const handleClearCache = async () => {
-    if (confirm(`Clear cached data? You will need to re-download ${APPROX_DOWNLOAD} on next visit.`)) {
+    if (confirm(`Clear saved data? The next visit will download ${APPROX_DOWNLOAD_LABEL} again.`)) {
       await clearCache();
       window.location.reload();
     }
@@ -39,147 +55,48 @@ export default function DatabaseLoader({ children }: DatabaseLoaderProps) {
 
   if (progress.status === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="text-red-500 mb-4">
-          <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      <div role="alert" className="card mx-auto max-w-lg p-8 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m0 3.75h.008M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Failed to Load Database</h3>
-        <p className="text-slate-600 text-center max-w-md mb-4">
+        <h2 className="mt-4 text-lg font-semibold text-slate-900">The data couldn't be loaded</h2>
+        <p className="mt-2 text-sm break-words text-slate-600">
           {progress.error || 'An unexpected error occurred while loading the database.'}
         </p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-nc-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Try Again
+        <div className="mt-6 flex justify-center gap-3">
+          <button type="button" onClick={() => window.location.reload()} className="btn-primary">
+            Try again
           </button>
-          <button
-            onClick={handleClearCache}
-            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Clear Cache
+          <button type="button" onClick={handleClearCache} className="btn-secondary">
+            Clear saved data
           </button>
         </div>
       </div>
     );
   }
 
-  // Get status message
-  const getStatusMessage = () => {
-    switch (progress.status) {
-      case 'loading-wasm':
-        return 'Loading database engine...';
-      case 'checking-cache':
-        return 'Checking local cache...';
-      case 'downloading':
-        return progress.currentFile
-          ? `Downloading ${progress.currentFile}...`
-          : 'Downloading data...';
-      case 'loading-data':
-        return 'Preparing database...';
-      default:
-        return 'Initializing...';
-    }
-  };
-
-  // Get subtitle
-  const getSubtitle = () => {
-    if (progress.status === 'downloading' && progress.downloadedBytes && progress.totalBytes) {
-      return `${formatBytes(progress.downloadedBytes)} / ${formatBytes(progress.totalBytes)}`;
-    }
-    if (progress.cached) {
-      return 'Loading from local cache (no network)';
-    }
-    if (progress.status === 'loading-wasm') {
-      return 'Setting up the in-browser SQL engine...';
-    }
-    if (progress.status === 'checking-cache') {
-      return 'Checking if data is already cached locally...';
-    }
-    return `First load downloads ${APPROX_DOWNLOAD}, then it's cached locally`;
-  };
+  const percent = progress.totalProgress ?? 0;
 
   return (
-    <div className="flex flex-col items-center justify-center py-20">
-      {/* Progress circle */}
-      <div className="relative mb-6">
-        <svg className="w-24 h-24 transform -rotate-90">
-          {/* Background circle */}
-          <circle
-            cx="48"
-            cy="48"
-            r="40"
-            stroke="#e2e8f0"
-            strokeWidth="8"
-            fill="none"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="48"
-            cy="48"
-            r="40"
-            stroke="#002868"
-            strokeWidth="8"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * 40}`}
-            strokeDashoffset={`${2 * Math.PI * 40 * (1 - (progress.totalProgress || 0) / 100)}`}
-            className="transition-all duration-300"
-          />
-        </svg>
-        {/* Percentage text */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xl font-bold text-nc-blue">
-            {progress.totalProgress || 0}%
-          </span>
-        </div>
+    <div className="card mx-auto max-w-lg p-8 text-center" aria-live="polite">
+      <h2 className="text-lg font-semibold text-slate-900">{statusMessage(progress)}</h2>
+      <p className="mt-1 text-sm text-slate-500">{detailMessage(progress)}</p>
+
+      <div
+        className="mt-6 h-2 overflow-hidden rounded-full bg-slate-100"
+        role="progressbar"
+        aria-label="Loading data"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+      >
+        <div className="h-full rounded-full bg-nc-blue transition-[width] duration-300" style={{ width: `${Math.max(percent, 2)}%` }} />
       </div>
+      <p className="mt-2 text-xs font-medium text-slate-500 tabular-nums">{percent}%</p>
 
-      {/* Status message */}
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">
-        {getStatusMessage()}
-      </h3>
-
-      {/* Subtitle */}
-      <p className="text-slate-500 text-sm text-center max-w-md mb-4">
-        {getSubtitle()}
-      </p>
-
-      {/* File progress bar (when downloading) */}
-      {progress.status === 'downloading' && progress.fileProgress !== undefined && (
-        <div className="w-64 mb-4">
-          <div className="flex justify-between text-xs text-slate-500 mb-1">
-            <span>{progress.currentFile}</span>
-            <span>{progress.fileProgress}%</span>
-          </div>
-          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-nc-blue transition-all duration-150"
-              style={{ width: `${progress.fileProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Cache indicator */}
-      {progress.cached && (
-        <div className="flex items-center gap-2 text-green-600 text-sm">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Using cached data</span>
-        </div>
-      )}
-
-      {/* Cache info */}
-      {cacheSize > 0 && (
-        <p className="text-xs text-slate-400 mt-4">
-          Local cache: {formatBytes(cacheSize)}
-        </p>
-      )}
+      {cacheSize > 0 && <p className="mt-4 text-xs text-slate-400">Saved in this browser: {formatBytes(cacheSize)}</p>}
     </div>
   );
 }

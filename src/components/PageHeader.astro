@@ -1,0 +1,35 @@
+---
+import { withBase } from '../lib/url';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Intermediate breadcrumb links between Home and the current page. */
+  crumbs?: { label: string; path: string }[];
+}
+
+const { title, description, crumbs = [] } = Astro.props;
+---
+
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <nav aria-label="Breadcrumb" class="mb-2 text-sm text-slate-500">
+      <ol class="flex flex-wrap items-center gap-1.5">
+        <li><a href={withBase('/')} class="hover:text-nc-blue">Home</a></li>
+        {crumbs.map((crumb) => (
+          <li class="flex items-center gap-1.5">
+            <span aria-hidden="true">/</span>
+            <a href={withBase(crumb.path)} class="hover:text-nc-blue">{crumb.label}</a>
+          </li>
+        ))}
+        <li class="flex items-center gap-1.5">
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" class="text-slate-700">{title}</span>
+        </li>
+      </ol>
+    </nav>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+    {description && <p class="mt-1.5 max-w-2xl text-slate-600">{description}</p>}
+  </div>
+  <slot name="actions" />
+</div>

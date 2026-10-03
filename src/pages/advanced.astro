@@ -1,36 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import AdvancedSearch from '../components/AdvancedSearch';
+import { withBase } from '../lib/url';
 ---
 
-<BaseLayout title="List Builder" description="Build lists with multiple filters for North Carolina campaign finance data">
-  <div class="bg-slate-50 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Page Header -->
-      <div class="mb-8">
-        <nav class="text-sm text-slate-500 mb-2">
-          <a href="/" class="hover:text-nc-blue">Home</a>
-          <span class="mx-2">›</span>
-          <span class="text-slate-900">List Builder</span>
-        </nav>
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-slate-900">List Builder</h1>
-            <p class="text-slate-600 mt-2">
-              Build custom lists with multiple filters to find exactly what you're looking for
-            </p>
-          </div>
-          <a
-            href="/query-builder"
-            class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            Expert Mode →
-          </a>
-        </div>
-      </div>
-
-      <!-- List Builder Component -->
-      <AdvancedSearch client:load />
-    </div>
+<BaseLayout title="List Builder" description="Build filtered lists of North Carolina campaign contributions and expenditures">
+  <div class="page-container py-8">
+    <PageHeader
+      title="List Builder"
+      description="Filter contributions or expenditures by amount, date, location, employer and more. Export any list to CSV."
+    >
+      <a slot="actions" href={withBase('query-builder')} class="btn-secondary self-start sm:self-auto">
+        Need AND/OR logic? Try Expert Mode →
+      </a>
+    </PageHeader>
+    <AdvancedSearch client:load />
   </div>
 </BaseLayout>

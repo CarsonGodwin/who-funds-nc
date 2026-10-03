@@ -4,8 +4,9 @@
  * Last-Modified / Content-Length so refreshed data is picked up.
  */
 
-const DB_NAME = 'armadollar-nc-parquet-cache';
-const LEGACY_DB_NAMES = ['tec-parquet-cache'];
+const DB_NAME = 'who-funds-nc-parquet-cache';
+// Caches from earlier app names; deleted on startup so they don't keep using disk space.
+const LEGACY_DB_NAMES = ['tec-parquet-cache', 'armadollar-nc-parquet-cache'];
 const DB_VERSION = 1;
 const STORE_NAME = 'parquet-files';
 

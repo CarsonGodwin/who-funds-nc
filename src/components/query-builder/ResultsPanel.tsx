@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { SortableHeader, sortData, type SortState } from '../ResultsTable';
-import { formatCurrency, formatDate } from '../../lib/format';
+import { SortableHeader, nextSort, sortData, type SortState } from '../ResultsTable';
+import { formatAmount, formatCount, formatCurrency, formatDate } from '../../lib/format';
 import { FIELDS, type DataSource, type FieldDef, type Metric } from '../../lib/query-builder';
 
 type Row = Record<string, any>;
@@ -21,7 +21,7 @@ const MAX_RENDERED_ROWS = 1000;
 
 const METRIC_COLUMNS: Record<Metric, { label: string; format: (v: any) => string }> = {
   sum: { label: 'Total Amount', format: formatCurrency },
-  count: { label: 'Count', format: (v) => v?.toLocaleString() ?? '—' },
+  count: { label: 'Count', format: (v) => (v == null ? '—' : formatCount(v)) },
   avg: { label: 'Average', format: formatCurrency },
   min: { label: 'Min', format: formatCurrency },
   max: { label: 'Max', format: formatCurrency },
@@ -36,11 +36,12 @@ interface Column {
 }
 
 function fieldColumn(field: FieldDef): Column {
+  // Every numeric field in this data is a dollar amount.
   const render =
-    field.value === 'amount' ? (v: any) => formatCurrency(v)
+    field.type === 'number' ? (v: any) => (v == null ? '—' : formatAmount(v))
     : field.type === 'date' ? (v: any) => (v ? formatDate(v) : '—')
     : (v: any) => v?.toString() || '—';
-  return { key: field.value, label: field.label, align: 'left', render, cellClass: 'text-slate-900' };
+  return { key: field.value, label: field.label, align: field.type === 'number' ? 'right' : 'left', render, cellClass: 'text-slate-900' };
 }
 
 function columnsFor(result: QueryResult): Column[] {
@@ -55,7 +56,7 @@ function columnsFor(result: QueryResult): Column[] {
     label: METRIC_COLUMNS[m].label,
     align: 'right',
     render: METRIC_COLUMNS[m].format,
-    cellClass: m === 'sum' ? 'font-medium text-green-700' : 'text-slate-900',
+    cellClass: m === 'sum' ? 'font-semibold text-emerald-700' : 'text-slate-900',
   }));
   return [...groupColumns, ...metricColumns];
 }
@@ -63,32 +64,27 @@ function columnsFor(result: QueryResult): Column[] {
 export default function ResultsPanel({ result }: { result: QueryResult }) {
   const [sortState, setSortState] = useState<SortState>({ column: null, direction: null });
 
-  const handleSort = (column: string) =>
-    setSortState((prev) => {
-      if (prev.column !== column) return { column, direction: 'asc' };
-      if (prev.direction === 'asc') return { column, direction: 'desc' };
-      return { column: null, direction: null };
-    });
+  const handleSort = (column: string) => setSortState((prev) => nextSort(prev, column));
 
   const columns = useMemo(() => columnsFor(result), [result]);
   const sortedRows = useMemo(() => sortData(result.rows, sortState), [result.rows, sortState]);
   const visibleRows = sortedRows.slice(0, MAX_RENDERED_ROWS);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="p-4 border-b border-slate-200 bg-slate-50">
-        <h3 className="font-semibold text-slate-900">
-          {result.aggregated ? 'Aggregated Results' : 'Query Results'}
+    <section className="card overflow-hidden">
+      <div className="card-header">
+        <h2 className="card-title">
+          {result.aggregated ? 'Aggregated results' : 'Results'}
           <span className="ml-2 text-sm font-normal text-slate-500">
             ({result.rows.length.toLocaleString()} rows
             {result.rows.length > MAX_RENDERED_ROWS && `, showing first ${MAX_RENDERED_ROWS.toLocaleString()} — export CSV for all`})
           </span>
-        </h3>
+        </h2>
       </div>
 
-      <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-        <table className="w-full">
-          <thead className="bg-slate-50 sticky top-0">
+      <div className="max-h-[600px] overflow-auto">
+        <table className="data-table">
+          <thead className="sticky top-0 z-10">
             <tr>
               {columns.map((col) => (
                 <SortableHeader
@@ -97,18 +93,19 @@ export default function ResultsPanel({ result }: { result: QueryResult }) {
                   column={col.key}
                   sortState={sortState}
                   onSort={handleSort}
+                  align={col.align}
                   className={col.align === 'right' ? 'text-right' : 'text-left'}
                 />
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {visibleRows.map((row, i) => (
-              <tr key={i} className="hover:bg-slate-50">
+              <tr key={i}>
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-sm whitespace-nowrap ${col.align === 'right' ? 'text-right' : ''} ${col.cellClass}`}
+                    className={`whitespace-nowrap ${col.align === 'right' ? 'text-right' : ''} ${col.cellClass}`}
                   >
                     {col.render(row[col.key])}
                   </td>
@@ -118,6 +115,6 @@ export default function ResultsPanel({ result }: { result: QueryResult }) {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }

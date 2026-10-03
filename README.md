@@ -1,4 +1,4 @@
-# Armadollar NC
+# Who Funds NC
 
 A searchable web interface for North Carolina campaign finance data, running entirely in the browser using DuckDB-WASM.
 

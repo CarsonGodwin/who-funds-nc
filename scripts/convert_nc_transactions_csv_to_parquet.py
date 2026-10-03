@@ -74,7 +74,7 @@ def require_column(column_lookup: Dict[str, str], *candidates: str) -> str:
     return found
 
 
-def parse_date_to_int(value: object) -> int:
+def parse_raw_date(value: object) -> int:
     if value is None:
         return 0
     text = str(value).strip()
@@ -96,6 +96,15 @@ def parse_date_to_int(value: object) -> int:
         return int(dt.strftime("%Y%m%d"))
     except Exception:
         return 0
+
+
+# Typos in the source (e.g. a year of 9896) parse fine but are impossible; treat them as unknown (0).
+LATEST_PLAUSIBLE_DATE = (datetime.now().year + 1) * 10000 + 1231
+
+
+def parse_date_to_int(value: object) -> int:
+    date_int = parse_raw_date(value)
+    return date_int if 19000101 <= date_int <= LATEST_PLAUSIBLE_DATE else 0
 
 
 def parse_amount(value: object) -> float:
@@ -214,11 +223,15 @@ def main() -> None:
 
     if committee_id_col:
         committee_ids = df[committee_id_col].map(normalize_text)
+        # Placeholders such as "---" are not real IDs; treat them as missing.
+        committee_ids = committee_ids.where(committee_ids.str.contains(r"[A-Za-z0-9]", regex=True), "")
     else:
         committee_ids = pd.Series([""] * len(df))
 
+    # Committees without an SBoE ID get a stable ID derived from their name, so all of a
+    # committee's rows share one filer (hashing the row index would make one filer per row).
     working["filer_id"] = [
-        committee_ids.iloc[i] if committee_ids.iloc[i] else f"FILER_{stable_hash(working['committee_name'].iloc[i], i)}"
+        committee_ids.iloc[i] if committee_ids.iloc[i] else f"FILER_{stable_hash(working['committee_name'].iloc[i])}"
         for i in range(len(working))
     ]
 

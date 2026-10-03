@@ -1,177 +1,168 @@
-import { useState, useEffect, useCallback } from 'react';
-import FacetedFilters, { type FilterValues } from './FacetedFilters';
+import { useEffect, useState } from 'react';
 import ResultsTable from './ResultsTable';
 import Pagination from './Pagination';
 import DatabaseLoader from './DatabaseLoader';
-import { type Contribution, type SortParams } from '../lib/types';
-import { searchContributions, type SearchFilters } from '../lib/queries';
+import SearchBox from './SearchBox';
+import ErrorNotice from './ErrorNotice';
+import { SelectField, TextField, type Option } from './advanced/FormFields';
+import { EXPORT_LIMIT, exportContributions, getDistinctValues, searchContributions, type SearchFilters } from '../lib/queries';
+import { getUrlParam, setUrlParam, useDebounced, usePagedSearch } from '../lib/hooks';
+import { formatCount, humanize } from '../lib/format';
+import { parseNumber } from '../lib/sql';
+import { downloadCsv } from '../lib/csv';
 
-interface ContributorSearchProps {
-  initialQuery?: string;
+const PAGE_SIZE = 50;
+
+interface ContributionFilters {
+  dateFrom: string;
+  dateTo: string;
+  amountMin: string;
+  amountMax: string;
+  contributorType: string;
 }
 
-export default function ContributorSearch({ initialQuery = '' }: ContributorSearchProps) {
-  const [query, setQuery] = useState(initialQuery);
-  const [filters, setFilters] = useState<FilterValues>({
-    dateFrom: '',
-    dateTo: '',
-    amountMin: '',
-    amountMax: '',
-    contributorType: '',
-    party: '',
-    officeType: '',
-    filerType: '',
-  });
-  const [results, setResults] = useState<Contribution[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-  const [sortState, setSortState] = useState<SortParams | null>(null);
-  const pageSize = 50;
+const NO_FILTERS: ContributionFilters = { dateFrom: '', dateTo: '', amountMin: '', amountMax: '', contributorType: '' };
 
-  // Read URL parameters client-side on mount
+function toSearchFilters(name: string, f: ContributionFilters): SearchFilters {
+  return {
+    query: name || undefined,
+    dateFrom: f.dateFrom || undefined,
+    dateTo: f.dateTo || undefined,
+    amountMin: parseNumber(f.amountMin) ?? undefined,
+    amountMax: parseNumber(f.amountMax) ?? undefined,
+    contributorType: f.contributorType || undefined,
+  };
+}
+
+function DonorSearchResults() {
+  const [input, setInput] = useState(() => getUrlParam('q'));
+  const [submitted, setSubmitted] = useState(input);
+  const [filters, setFilters] = useState<ContributionFilters>(NO_FILTERS);
+  const [typeOptions, setTypeOptions] = useState<Option[]>([]);
+  const [exporting, setExporting] = useState(false);
+
+  // Typing an amount shouldn't fire a query per keystroke.
+  const appliedFilters = useDebounced(filters);
+  const searchFilters = toSearchFilters(submitted, appliedFilters);
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const urlQuery = params.get('q');
-      if (urlQuery) {
-        setQuery(urlQuery);
-      }
-      setInitialized(true);
-    }
+    getDistinctValues('contributions', 'contributor_type')
+      .then((types) => setTypeOptions(types.map((value) => ({ value, label: humanize(value) }))))
+      .catch((err) => console.warn('Could not load contributor types:', err));
   }, []);
 
-  const performSearch = useCallback(async () => {
-    setLoading(true);
+  const search = usePagedSearch(
+    (page, sort, knownCount) => searchContributions(searchFilters, { page, pageSize: PAGE_SIZE, sort, knownCount }),
+    JSON.stringify(searchFilters)
+  );
+
+  const submit = (value: string) => {
+    setSubmitted(value);
+    setUrlParam('q', value);
+  };
+
+  const set = (key: keyof ContributionFilters) => (value: string) => setFilters((prev) => ({ ...prev, [key]: value }));
+  const hasActiveFilters = Object.values(filters).some(Boolean);
+
+  const exportCsv = async () => {
+    setExporting(true);
     try {
-      const searchFilters: SearchFilters = {
-        query: query || undefined,
-        dateFrom: filters.dateFrom || undefined,
-        dateTo: filters.dateTo || undefined,
-        amountMin: filters.amountMin ? parseFloat(filters.amountMin) : undefined,
-        amountMax: filters.amountMax ? parseFloat(filters.amountMax) : undefined,
-        contributorType: filters.contributorType || undefined,
-      };
-
-      const result = await searchContributions(searchFilters, {
-        page: currentPage,
-        pageSize,
-        sort: sortState || undefined,
-      });
-
-      setResults(result.data);
-      setTotalCount(result.count);
-    } catch (error) {
-      console.error('Search error:', error);
+      const rows = await exportContributions(searchFilters, search.sort);
+      downloadCsv(rows, submitted ? `nc-contributions-${submitted.replace(/\W+/g, '-').toLowerCase()}` : 'nc-contributions');
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Sorry, the export failed. Please try again.');
     } finally {
-      setLoading(false);
+      setExporting(false);
     }
-  }, [query, filters, currentPage, sortState]);
-
-  // Run search when initialized (after URL params are read) or when page/filters/sort change
-  useEffect(() => {
-    if (initialized) {
-      performSearch();
-    }
-  }, [initialized, currentPage, filters, sortState]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleFilterChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSortChange = (newSort: SortParams | null) => {
-    setSortState(newSort);
-    setCurrentPage(1); // Reset to page 1 when sort changes
-  };
-
-  const handleExportCSV = () => {
-    // TODO: Implement CSV export
-    alert('CSV export coming soon!');
-  };
-
-  const handleSubmit = (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    performSearch();
   };
 
   return (
-    <DatabaseLoader>
-    <div className="space-y-6">
-      {/* Search Input */}
-      <form onSubmit={handleSubmit} className="flex gap-3">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by contributor name..."
-            className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-nc-blue focus:border-transparent"
-          />
-          <svg
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <button
-          type="submit"
-          className="px-6 py-3 bg-nc-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors"
-        >
-          Search
-        </button>
-      </form>
-
-      {/* Filters */}
-      <FacetedFilters
-        filters={filters}
-        onChange={handleFilterChange}
-        showContributorFilters={true}
+    <div className="space-y-5">
+      <SearchBox
+        value={input}
+        onChange={setInput}
+        onSubmit={submit}
+        label="Contributor name"
+        placeholder="Contributor name, e.g. “Smith”"
       />
 
-      {/* Results Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">
-          {loading ? 'Searching...' : `${totalCount.toLocaleString()} contributions found`}
-        </h2>
-        <button
-          onClick={handleExportCSV}
-          className="px-4 py-2 text-sm font-medium text-nc-blue border border-nc-blue rounded-lg hover:bg-blue-50 transition-colors"
-        >
-          Export CSV
-        </button>
+      <div className="card grid grid-cols-2 gap-3 p-4 sm:gap-4 lg:grid-cols-5">
+        <TextField label="From date" type="date" value={filters.dateFrom} onChange={set('dateFrom')} />
+        <TextField label="To date" type="date" value={filters.dateTo} onChange={set('dateTo')} />
+        <TextField label="Min amount" value={filters.amountMin} onChange={set('amountMin')} placeholder="$0" numeric />
+        <TextField label="Max amount" value={filters.amountMax} onChange={set('amountMax')} placeholder="No limit" numeric />
+        {typeOptions.length > 1 ? (
+          <div className="col-span-2 lg:col-span-1">
+            <SelectField
+              label="Contributor type"
+              value={filters.contributorType}
+              onChange={set('contributorType')}
+              allLabel="All types"
+              options={typeOptions}
+            />
+          </div>
+        ) : (
+          <div className="hidden lg:block" />
+        )}
+        {hasActiveFilters && (
+          <div className="col-span-2 lg:col-span-5">
+            <button type="button" onClick={() => setFilters(NO_FILTERS)} className="btn-ghost btn-sm -ml-3">
+              Clear filters
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Results Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <ResultsTable
-          type="contributions"
-          data={results}
-          loading={loading}
-          sortState={sortState}
-          onSortChange={handleSortChange}
-        />
+      <div className="card overflow-hidden">
+        <div className="card-header">
+          <h2 className="card-title" aria-live="polite">
+            {search.loading && search.count === 0
+              ? 'Searching…'
+              : `${formatCount(search.count)} ${search.count === 1 ? 'contribution' : 'contributions'}`}
+            {submitted && <span className="font-normal text-slate-500"> from “{submitted}”</span>}
+          </h2>
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={exporting || search.count === 0}
+            className="btn-secondary btn-sm"
+            title={search.count > EXPORT_LIMIT ? `Exports the first ${formatCount(EXPORT_LIMIT)} rows` : undefined}
+          >
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+        </div>
+        {search.error ? (
+          <ErrorNotice message={search.error} />
+        ) : (
+          <ResultsTable
+            type="contributions"
+            data={search.data}
+            loading={search.loading}
+            sort={search.sort}
+            onSortChange={search.setSort}
+            emptyMessage="No contributions match your search. Try a shorter name or fewer filters."
+          />
+        )}
       </div>
 
-      {/* Pagination */}
       <Pagination
-        currentPage={currentPage}
-        totalPages={Math.ceil(totalCount / pageSize)}
-        totalResults={totalCount}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
+        currentPage={search.page}
+        totalResults={search.count}
+        pageSize={PAGE_SIZE}
+        onPageChange={(page) => {
+          search.setPage(page);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
+  );
+}
+
+export default function ContributorSearch() {
+  return (
+    <DatabaseLoader>
+      <DonorSearchResults />
     </DatabaseLoader>
   );
 }

@@ -1,7 +1,7 @@
 import { query } from './duckdb';
 import { paginatedQuery, type SearchResult } from './queries';
 import { getCitiesInCounty } from './nc-geo';
-import type { Contribution, Expenditure } from './types';
+import type { Contribution, Expenditure, SortParams } from './types';
 import { dateToInt, escapeSql, nameCondition, parseNumber, whereClause, type NameMatchMode } from './sql';
 
 export type TransactionType = 'contributions' | 'expenditures';
@@ -80,9 +80,9 @@ export type SearchOutcome =
   | { kind: 'transactions'; data: (Contribution | Expenditure)[]; count: number }
   | { kind: 'donors'; data: AggregatedDonor[]; count: number };
 
-/** URL query params that pre-fill the form and run a search (used by links from the home page). */
+/** URL query params that pre-fill the form and run a search (used by links from the home and profile pages). */
 const URL_PARAM_KEYS = [
-  'party', 'contributorType', 'amountMin', 'amountMax', 'minContributions', 'minTotalAmount', 'filerType', 'name',
+  'party', 'contributorType', 'amountMin', 'amountMax', 'minContributions', 'minTotalAmount', 'filerType', 'name', 'filerName',
 ] as const;
 
 export function filtersFromParams(params: URLSearchParams): AdvancedFilters | null {
@@ -144,8 +144,9 @@ function buildSource(filters: AdvancedFilters) {
   }
   if (filters.zipCode) add(`${p}${zipCol} LIKE '${escapeSql(filters.zipCode)}%'`);
   if (filters.county) {
+    // Only cities in the lookup can be matched; a county with none must match nothing, not everything.
     const cities = getCitiesInCounty(filters.county);
-    if (cities.length > 0) add(`UPPER(${p}${cityCol}) IN (${cities.map(sqlText).join(', ')})`);
+    add(cities.length > 0 ? `UPPER(${p}${cityCol}) IN (${cities.map(sqlText).join(', ')})` : 'FALSE');
   }
 
   if (isContribution) {
@@ -167,12 +168,28 @@ function buildSource(filters: AdvancedFilters) {
   return { from, prefix: p, conditions, select: needsJoin ? `${alias}.*` : '*' };
 }
 
-/** Run a search. `knownCount` skips the COUNT query when only the page changed. */
+const TRANSACTION_SORT_COLUMNS: Record<TransactionType, readonly string[]> = {
+  contributions: ['contributor_name', 'filer_name', 'amount', 'date', 'contributor_city'],
+  expenditures: ['filer_name', 'payee_name', 'amount', 'date', 'category'],
+};
+
+const DONOR_SORT_COLUMNS = ['contributor_name', 'num_contributions', 'total_amount', 'avg_amount', 'first_date'];
+
+/** ORDER BY for a whitelisted sort column, else the fallback. */
+function orderBy(sort: SortParams | undefined, allowed: readonly string[], prefix: string, fallback: string): string {
+  if (sort && allowed.includes(sort.column)) {
+    return `ORDER BY ${prefix}${sort.column} ${sort.direction === 'asc' ? 'ASC' : 'DESC'}, ${fallback}`;
+  }
+  return `ORDER BY ${fallback}`;
+}
+
+/** Run a search. `knownCount` skips the COUNT query when only the page or sort changed. */
 export async function runSearch(
   filters: AdvancedFilters,
   page: number,
   pageSize: number,
-  knownCount?: number
+  knownCount?: number,
+  sort?: SortParams
 ): Promise<SearchOutcome> {
   const { from, prefix: p, conditions, select } = buildSource(filters);
 
@@ -205,17 +222,18 @@ export async function runSearch(
         FROM ${from}
         ${where}
         ${group}
-        ORDER BY num_contributions DESC, total_amount DESC
+        ${orderBy(sort, DONOR_SORT_COLUMNS, '', 'num_contributions DESC, total_amount DESC, contributor_name')}
         LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
       `),
     ]);
     return { kind: 'donors', data, count };
   }
 
+  const idColumn = filters.transactionType === 'contributions' ? 'contribution_id' : 'expenditure_id';
   const result: SearchResult<Contribution | Expenditure> = await paginatedQuery(
     from,
     conditions,
-    `ORDER BY ${p}date DESC`,
+    orderBy(sort, TRANSACTION_SORT_COLUMNS[filters.transactionType], p, `${p}date DESC, ${p}${idColumn}`),
     { page, pageSize, knownCount },
     select
   );

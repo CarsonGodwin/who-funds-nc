@@ -1,22 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import CandidatePageWrapper from '../components/CandidatePageWrapper';
+import CandidateProfile from '../components/CandidateProfile';
+import { withBase } from '../lib/url';
 ---
 
-<BaseLayout title="Committee Profile">
-  <div class="bg-slate-50 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Breadcrumb -->
-      <nav class="text-sm text-slate-500 mb-6">
-        <a href="/" class="hover:text-nc-blue">Home</a>
-        <span class="mx-2">›</span>
-        <a href="/search/committees" class="hover:text-nc-blue">Committees</a>
-        <span class="mx-2">›</span>
-        <span class="text-slate-900">Profile</span>
-      </nav>
-
-      <!-- Profile Component -->
-      <CandidatePageWrapper client:load />
-    </div>
+<BaseLayout title="Committee Profile" description="Contributions, top donors, and fundraising over time for a North Carolina committee">
+  <div class="page-container py-8">
+    <!-- The committee's name is only known client-side, so the profile renders its own heading. -->
+    <nav aria-label="Breadcrumb" class="mb-4 text-sm text-slate-500">
+      <ol class="flex flex-wrap items-center gap-1.5">
+        <li><a href={withBase('/')} class="hover:text-nc-blue">Home</a></li>
+        <li aria-hidden="true">/</li>
+        <li><a href={withBase('search/committees')} class="hover:text-nc-blue">Committees</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page" class="text-slate-700">Profile</li>
+      </ol>
+    </nav>
+    <CandidateProfile client:load />
   </div>
 </BaseLayout>

@@ -8,6 +8,15 @@ export const sqlString = (str: string): string => `'${escapeSql(str)}'`;
 /** "2020-01-31" (from <input type="date">) -> 20200131, the format stored in the parquet files. */
 export const dateToInt = (dateStr: string): number => parseInt(dateStr.replace(/-/g, ''), 10);
 
+/**
+ * Today as YYYYMMDD. The source data has a few typo'd dates far in the future (e.g. 98960907),
+ * so "latest" and per-year/month summaries ignore anything after today.
+ */
+export function todayInt(): number {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
 /** Parse user-entered numeric text; returns null when empty or not a finite number. */
 export function parseNumber(text: string | undefined): number | null {
   if (text === undefined || text.trim() === '') return null;

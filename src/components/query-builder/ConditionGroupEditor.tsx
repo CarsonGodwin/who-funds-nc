@@ -29,16 +29,18 @@ interface Props {
   isNested?: boolean;
 }
 
-const inputClass = 'px-2 py-1 border border-slate-300 rounded text-sm';
+const inputClass = 'input w-auto py-1.5';
 
 function RemoveButton({ title, onClick, className = '' }: { title: string; onClick: () => void; className?: string }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded ${className}`}
+      className={`rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 ${className}`}
       title={title}
+      aria-label={title}
     >
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
@@ -66,11 +68,12 @@ function ConditionRow({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap p-2 bg-slate-50 rounded-lg">
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
       <select
         value={condition.field}
         onChange={(e) => update({ field: e.target.value, operator: operatorsFor(fieldType(dataSource, e.target.value))[0]?.value ?? 'contains' })}
-        className={`${inputClass} bg-white min-w-[160px]`}
+        aria-label="Field"
+        className={`${inputClass} min-w-[160px]`}
       >
         {fields.map((f) => (
           <option key={f.value} value={f.value}>{f.label}</option>
@@ -80,7 +83,8 @@ function ConditionRow({
       <select
         value={condition.operator}
         onChange={(e) => update({ operator: e.target.value as Operator })}
-        className={`${inputClass} bg-white min-w-[140px]`}
+        aria-label="Operator"
+        className={`${inputClass} min-w-[140px]`}
       >
         {operators.map((op) => (
           <option key={op.value} value={op.value}>{op.label}</option>
@@ -92,8 +96,9 @@ function ConditionRow({
           {...valueInputProps}
           value={condition.value}
           onChange={(e) => update({ value: e.target.value })}
-          placeholder={condition.operator === 'in_list' ? 'value1, value2, ...' : 'Enter value...'}
-          className={`${inputClass} flex-1 min-w-[150px]`}
+          placeholder={condition.operator === 'in_list' ? 'value1, value2, …' : 'Value'}
+          aria-label="Value"
+          className={`${inputClass} min-w-[150px] flex-1`}
         />
       )}
 
@@ -104,6 +109,7 @@ function ConditionRow({
             {...valueInputProps}
             value={condition.value2 || ''}
             onChange={(e) => update({ value2: e.target.value })}
+            aria-label="Upper value"
             className={`${inputClass} min-w-[120px]`}
           />
         </>
@@ -116,13 +122,14 @@ function ConditionRow({
 
 export default function ConditionGroupEditor({ group, dataSource, fields, actions, depth = 0, isNested = false }: Props) {
   return (
-    <div className={`${depth % 2 === 0 ? 'bg-white' : 'bg-blue-50'} border border-slate-200 rounded-lg p-3 ${depth > 0 ? 'ml-4' : ''}`}>
-      <div className="flex items-center gap-2 mb-3">
+    <div className={`rounded-lg border p-3 ${depth % 2 === 0 ? 'border-slate-200 bg-slate-50' : 'border-blue-200 bg-nc-blue-light/60'} ${depth > 0 ? 'ml-2 sm:ml-4' : ''}`}>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium text-slate-700">Match</span>
         <select
           value={group.logicalOperator}
           onChange={(e) => actions.setOperator(group.id, e.target.value as LogicalOperator)}
-          className={`${inputClass} bg-white font-medium`}
+          aria-label="Combine conditions with"
+          className={`${inputClass} font-medium`}
         >
           <option value="AND">ALL (AND)</option>
           <option value="OR">ANY (OR)</option>
@@ -150,18 +157,12 @@ export default function ConditionGroupEditor({ group, dataSource, fields, action
         )}
       </div>
 
-      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200">
-        <button
-          onClick={() => actions.addCondition(group.id)}
-          className="px-3 py-1 text-sm text-nc-blue hover:bg-blue-50 rounded-lg border border-nc-blue"
-        >
-          + Add Condition
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={() => actions.addCondition(group.id)} className="btn-secondary btn-sm">
+          + Condition
         </button>
-        <button
-          onClick={() => actions.addGroup(group.id)}
-          className="px-3 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-300"
-        >
-          + Add Group
+        <button type="button" onClick={() => actions.addGroup(group.id)} className="btn-ghost btn-sm">
+          + Group
         </button>
       </div>
     </div>
